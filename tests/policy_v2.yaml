@@ -1,0 +1,72 @@
+version: '2.0'
+apply_to:
+- all
+logging:
+  level: info
+policies:
+- type: eth_value_limit
+  max_value_wei: '1000000000000000000'
+  enabled: true
+  description: Limit ETH transfers to 1 ETH per transaction
+- type: address_denylist
+  denied_addresses: []
+  enabled: true
+  description: Block transactions to denied addresses
+- type: address_allowlist
+  allowed_addresses: []
+  enabled: false
+  description: Only allow transactions to approved addresses
+- type: token_amount_limit
+  max_amount: '1000000000000000000000'
+  enabled: false
+  description: Limit token transfers per transaction
+- type: per_asset_limit
+  asset_limits:
+  - name: USDC
+    address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
+    max_amount: '10000000'
+    decimals: 6
+  - name: DAI
+    address: '0x6B175474E89094C44Da98b954EedeAC495271d0F'
+    max_amount: '100000000000000000000'
+    decimals: 18
+  enabled: true
+  description: Per-asset spending limits
+- type: function_allowlist
+  allowed_functions:
+  - eth_transfer
+  - transfer
+  - approve
+  enabled: false
+  description: Only allow specific function calls
+- type: gas_limit
+  max_gas: 500000
+  enabled: true
+  description: Limit gas to 500k per transaction
+simulation:
+  enabled: true
+  fail_on_revert: true
+  estimate_gas: true
+  description: Simulate transactions before execution
+calldata_validation:
+  enabled: true
+  strict_mode: false
+  description: Validate and parse transaction calldata
+
+# ============================================================
+# LLM VALIDATION - Intelligent malicious activity detection
+# ============================================================
+# Requires: OPENAI_API_KEY or ANTHROPIC_API_KEY environment variable
+# The LLM automatically detects all security patterns without explicit configuration
+llm_validation:
+  enabled: false
+  provider: "openai"  # openai, anthropic, or local
+  model: "gpt-4o-mini"  # gpt-4, gpt-4-mini, claude-opus-4, etc.
+  block_threshold: 0.70  # Block if confidence >= 70%
+  warn_threshold: 0.40   # Warn if confidence >= 40%
+  description: |
+    Use LLM to analyze transaction simulation results for malicious patterns.
+    Automatically detects: hidden approvals, unusual fund flow, reentrancy,
+    flash loans, sandwich attacks, hidden fees, phishing, token draining, etc.
+    Cost: ~$0.003 per transaction (gpt-4-mini).
+    If API key not set, LLM analysis is skipped gracefully.

@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [
-    {name = "BuildBear Labs", email = "support@buildbear.io"}
+    {name = "Galaar", email = "me@dipeshsukhani.dev"}
 ]
 keywords = ["agent", "security", "policy", "blockchain", "ai", "validation", "agentkit"]
 classifiers = [
@@ -48,9 +48,9 @@ dev = [
 agentguard = "agentguard.__main__:cli"
 
 [project.urls]
-Homepage = "https://github.com/BuildBearLabs/agentguard"
-Repository = "https://github.com/BuildBearLabs/agentguard"
-Issues = "https://github.com/BuildBearLabs/agentguard/issues"
+Homepage = ""
+Repository = "https://github.com/galaar-org/AgentARC"
+Issues = "https://github.com/galaar-org/AgentARC/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]

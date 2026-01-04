@@ -1,0 +1,8 @@
+{
+  "token": "0x579342bCd8A72B6f5C5231ed3Ab84f92C9Ce79b4",
+  "malicious": "0xDc569c33c8C4760E2cB317FBe7B95e4b0318ed6E",
+  "phishing": "0xfb9256a0eA9d0313b3BafAE0c80A19F44046aA1a",
+  "whitelisted": "0x13f0833fC029A23eD58eBA4eB12d9B34c2568940",
+  "deployer": "0x78e85F2A6e2C95096Db790D9B78AD168daac8e26",
+  "chainId": 84532
+}

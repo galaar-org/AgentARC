@@ -2,11 +2,11 @@ Metadata-Version: 2.4
 Name: agentguard
 Version: 0.1.0
 Summary: Advanced policy enforcement layer for AI agents with 3-stage validation, transaction simulation, and security controls
-Author-email: BuildBear Labs <support@buildbear.io>
+Author-email: Galaar Labs <me@dipeshsukhani.dev>
 License: MIT
-Project-URL: Homepage, https://github.com/BuildBearLabs/agentguard
-Project-URL: Repository, https://github.com/BuildBearLabs/agentguard
-Project-URL: Issues, https://github.com/BuildBearLabs/agentguard/issues
+Project-URL: Homepage, https://github.com/galaar-org/AgentARC
+Project-URL: Repository, https://github.com/galaar-org/AgentARC
+Project-URL: Issues, https://github.com/galaar-org/AgentARC/issues
 Keywords: agent,security,policy,blockchain,ai,validation,agentkit
 Classifier: Development Status :: 3 - Alpha
 Classifier: Intended Audience :: Developers
@@ -36,10 +36,10 @@ Dynamic: license-file
 
 # AgentGuard - Security Layer for AI Blockchain Agents
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/BuildBearLabs/agentguard)
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/galaar-org/AgentARC)
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![GitHub](https://img.shields.io/badge/github-BuildBearLabs%2Fagentguard-blue.svg)](https://github.com/BuildBearLabs/agentguard)
+[![GitHub](https://img.shields.io/badge/github-galaar-org%2Fagentguard-blue.svg)](https://github.com/galaar-org/AgentARC)
 
 **Advanced security and policy enforcement layer for AI blockchain agents with multi-stage validation, transaction simulation, honeypot detection, and LLM-based threat analysis.**
 
@@ -75,7 +75,7 @@ AgentGuard provides a comprehensive security framework for AI agents interacting
 pip install agentguard
 
 # Or install from source
-git clone https://github.com/BuildBearLabs/agentguard.git
+git clone https://github.com/galaar-org/AgentARC.git
 cd agentguard
 pip install -e .
 
@@ -665,7 +665,7 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for gu
 
 ## 🆘 Support
 
-- **Issues:** [GitHub Issues](https://github.com/BuildBearLabs/agentguard/issues)
+- **Issues:** [GitHub Issues](https://github.com/galaar-org/AgentARC/issues)
 - **Examples:** [examples/](examples/)
 - **Documentation:** [README.md](README.md)
 
