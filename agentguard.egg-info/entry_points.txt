@@ -1,0 +1,2 @@
+[console_scripts]
+agentguard = agentguard.__main__:cli

@@ -1,0 +1,16 @@
+pyyaml>=6.0
+click>=8.0.0
+web3>=6.0.0
+eth-abi>=4.0.0
+rich>=13.0.0
+
+[agentkit]
+coinbase-agentkit>=0.1.0
+web3>=6.0.0
+eth-abi>=4.0.0
+
+[dev]
+pytest>=7.0.0
+pytest-cov>=4.0.0
+black>=23.0.0
+ruff>=0.1.0
