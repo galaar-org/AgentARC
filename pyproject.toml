@@ -1,0 +1,64 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentarc"
+version = "0.1.0"
+description = "Advanced policy enforcement layer for AI agents with 3-stage validation, transaction simulation, and security controls"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [
+    {name = "Galaar", email = "me@dipeshsukhani.dev"}
+]
+keywords = ["agent", "security", "policy", "ai", "validation", "agentkit"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "pyyaml>=6.0",
+    "click>=8.0.0",
+    "web3>=6.0.0",
+    "eth-abi>=4.0.0",
+    "rich>=13.0.0",
+]
+
+[project.optional-dependencies]
+agentkit = [
+    "coinbase-agentkit>=0.1.0",
+    "web3>=6.0.0",
+    "eth-abi>=4.0.0",
+]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+
+[project.scripts]
+agentarc = "agentarc.__main__:cli"
+
+[project.urls]
+Homepage = "https://github.com/galaar-org/AgentARC"
+Repository = "https://github.com/galaar-org/AgentARC"
+Issues = "https://github.com/galaar-org/AgentARC/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["agentarc*"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

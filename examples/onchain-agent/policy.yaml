@@ -1,0 +1,71 @@
+version: '2.0'
+apply_to:
+- all
+logging:
+  level: info
+policies:
+- type: eth_value_limit
+  max_value_wei: '1000000000000000000'
+  enabled: true
+  description: Limit ETH transfers to 1 ETH per transaction
+- type: address_denylist
+  denied_addresses: []
+  enabled: true
+  description: Block transactions to denied addresses
+- type: address_allowlist
+  allowed_addresses: []
+  enabled: false
+  description: Only allow transactions to approved addresses
+- type: token_amount_limit
+  max_amount: '1000000000000000000000'
+  enabled: false
+  description: Limit token transfers per transaction
+- type: per_asset_limit
+  asset_limits:
+  - name: USDC
+    address: '0x036CbD53842c5426634e7929541eC2318f3dCF7e'
+    max_amount: '10000000'
+    decimals: 6
+  - name: DAI
+    address: '0x6B175474E89094C44Da98b954EedeAC495271d0F'
+    max_amount: '100000000000000000000'
+    decimals: 18
+  enabled: true
+  description: Per-asset spending limits
+- type: function_allowlist
+  allowed_functions:
+  - eth_transfer
+  - transfer
+  - approve
+  enabled: false
+  description: Only allow specific function calls
+- type: gas_limit
+  max_gas: 500000
+  enabled: true
+  description: Limit gas to 500k per transaction
+simulation:
+  enabled: true
+  fail_on_revert: true
+  estimate_gas: true
+  print_trace: true  # Enable detailed Tenderly trace printing
+  description: Simulate transactions before execution
+calldata_validation:
+  enabled: true
+  strict_mode: false
+  description: Validate and parse transaction calldata
+llm_validation:
+  enabled: true 
+  provider: openai
+  model: gpt-4o-mini
+  block_threshold: 0.70
+  warn_threshold: 0.40
+  description: AI-powered security analysis to detect malicious patterns
+  check_patterns:
+    - hidden_approvals
+    - multiple_approvals
+    - unlimited_approvals
+    - token_draining
+    - delegatecall_risks
+    - reentrancy
+    - honeypot_tokens
+    - hidden_fees
