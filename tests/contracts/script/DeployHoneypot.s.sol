@@ -6,7 +6,7 @@ import "../src/HoneypotToken.sol";
 
 /**
  * @title Deploy Honeypot Test Contracts
- * @notice Deploys honeypot token and blacklist manager for AgentGuard testing
+ * @notice Deploys honeypot token and blacklist manager for AgentArc testing
  *
  * Usage:
  *   # Local deployment (Anvil)
@@ -56,7 +56,7 @@ contract DeployHoneypotScript is Script {
         console.log("  [6] External blacklist call - hidden attack vector");
 
         console.log("\n=== Testing Instructions ===");
-        console.log("Test with AgentGuard to verify detection of:");
+        console.log("Test with AgentArc to verify detection of:");
         console.log("  - No Transfer events on actual transfer attempt");
         console.log("  - Hidden external calls");
         console.log("  - Balance manipulation");

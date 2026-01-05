@@ -1,12 +1,12 @@
-# AgentGuard OnChain Agent Dependencies
+#AgentArc OnChain Agent Dependencies
 
 # Core dependencies
-agentguard>=0.2.0
+agentarc>=0.2.0
 coinbase-agentkit>=0.1.0
 openai>=1.0.0
 python-dotenv>=1.0.0
 
-# Web3 dependencies (included with agentguard)
+# Web3 dependencies (included with agentarc)
 web3>=6.0.0
 eth-abi>=4.0.0
 

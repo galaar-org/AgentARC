@@ -4,11 +4,8 @@ include LICENSE
 include CHANGELOG.md
 include CONTRIBUTING.md
 
-# Include configuration examples
-include policy_v2.yaml
-
 # Include package data
-recursive-include agentguard *.py
+recursive-include agentarc *.py
 
 # Exclude compiled files
 global-exclude *.pyc

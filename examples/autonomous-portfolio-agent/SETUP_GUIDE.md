@@ -103,19 +103,19 @@ autonomous-portfolio-agent/
 **✅ Correct way (matches onchain-agent example):**
 
 ```python
-from agentguard import PolicyWalletProvider, PolicyEngine
+from agentarc import PolicyWalletProvider, PolicyEngine
 ```
 
 **❌ Wrong way (don't use):**
 
 ```python
-from agentguard.policy_engine import PolicyEngine
-from agentguard.wallet_wrapper import PolicyWalletProvider
+from agentarc.policy_engine import PolicyEngine
+from agentarc.wallet_wrapper import PolicyWalletProvider
 ```
 
 ## Common Issues
 
-### "ModuleNotFoundError: No module named 'agentguard'"
+### "ModuleNotFoundError: No module named 'agentarc'"
 
 **Solution**: Install PolicyLayer:
 ```bash
@@ -214,12 +214,6 @@ from core.metrics_logger import MetricsLogger
 logger = MetricsLogger()
 logger.print_summary()
 ```
-
-## Support
-
-- **PolicyLayer Issues**: https://github.com/galaar-org/AgentARC/issues
-- **AgentKit Issues**: https://github.com/coinbase/agentkit/issues
-- **CDP Support**: https://docs.cdp.coinbase.com/
 
 ## Next Steps
 

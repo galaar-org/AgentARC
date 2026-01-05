@@ -17,7 +17,7 @@ from typing import List, Dict, Any
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from agentguard.llm_judge import LLMJudge, SecurityIndicators
+from agentarc.llm_judge import LLMJudge, SecurityIndicators
 
 
 @dataclass

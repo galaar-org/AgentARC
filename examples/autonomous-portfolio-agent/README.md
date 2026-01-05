@@ -425,6 +425,3 @@ MIT License - See LICENSE file
 - [Coinbase AgentKit](https://github.com/coinbase/agentkit)
 - [LangChain](https://python.langchain.com/)
 - [Web3.py](https://web3py.readthedocs.io/)
-- [PolicyLayer](https://github.com/galaar-org/AgentARC)
-
-**Demo by**: Galaar AgentARC Team

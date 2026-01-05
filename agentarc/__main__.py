@@ -1,9 +1,9 @@
 """
-CLI for AgentGuard
+CLI for AgentARC
 
 Usage:
-    python -m agentguard setup
-    agentguard setup --path ./my-policy.yaml
+    python -m agentarc setup
+    agentarc setup --path ./my-policy.yaml
 """
 
 import click
@@ -14,24 +14,24 @@ from .policy_engine import PolicyConfig
 
 @click.group()
 def cli():
-    """AgentGuard CLI - Advanced policy enforcement for AI agents"""
+    """AgentARC CLI - Advanced policy enforcement for AI agents"""
     pass
 
 
 def _create_setup_readme(project_path: Path):
     """Create a SETUP.md file with integration instructions"""
-    readme_content = """# AgentGuard Setup Guide
+    readme_content = """# AgentARC Setup Guide
 
 ## Integration Steps
 
-### 1. Install AgentGuard
+### 1. Install AgentARC
 
 ```bash
 # Using pip
-pip install agentguard
+pip install agentarc
 
 # Using poetry
-poetry add agentguard
+poetry add agentarc
 ```
 
 ### 2. Configure Policies
@@ -50,7 +50,7 @@ Edit `policy.yaml` to configure your security policies:
 Add these 3 lines to your agent initialization code:
 
 ```python
-from agentguard import PolicyWalletProvider, PolicyEngine
+from agentarc import PolicyWalletProvider, PolicyEngine
 
 # After creating your base wallet provider
 policy_engine = PolicyEngine(
@@ -65,7 +65,7 @@ agentkit = AgentKit(wallet_provider=policy_wallet, action_providers=[...])
 
 ### 4. Example Integration
 
-**Before (without AgentGuard):**
+**Before (without AgentARC):**
 ```python
 from coinbase_agentkit import AgentKit, CdpEvmWalletProvider
 
@@ -73,10 +73,10 @@ wallet = CdpEvmWalletProvider(config)
 agentkit = AgentKit(wallet_provider=wallet, action_providers=[...])
 ```
 
-**After (with AgentGuard):**
+**After (with AgentARC):**
 ```python
 from coinbase_agentkit import AgentKit, CdpEvmWalletProvider
-from agentguard import PolicyWalletProvider, PolicyEngine
+from agentarc import PolicyWalletProvider, PolicyEngine
 
 # Create base wallet
 wallet = CdpEvmWalletProvider(config)
@@ -166,13 +166,13 @@ simulation:
 
 ## Support
 
-- Documentation: https://github.com/yourusername/agentguard
-- Issues: https://github.com/yourusername/agentguard/issues
+- Documentation: https://github.com/yourusername/agentarc
+- Issues: https://github.com/yourusername/agentarc/issues
 - Examples: See `examples/` directory
 
 ## Security
 
-AgentGuard provides multiple layers of protection:
+AgentARC provides multiple layers of protection:
 1. **Intent Analysis**: Parse transaction intent and calldata
 2. **Policy Validation**: Enforce user-defined rules
 3. **Simulation**: Test execution before sending
@@ -181,7 +181,7 @@ AgentGuard provides multiple layers of protection:
 Always test policies in a development environment before production use.
 """
 
-    readme_path = project_path / "AGENTGUARD_SETUP.md"
+    readme_path = project_path / "AGENTARC_SETUP.md"
     readme_path.write_text(readme_content)
     return readme_path
 
@@ -193,7 +193,7 @@ def setup(path: str):
 
     # Interactive setup
     click.echo("\n" + "="*60)
-    click.echo("AgentGuard Setup Wizard")
+    click.echo("AgentARC Setup Wizard")
     click.echo("="*60 + "\n")
 
     # Ask if existing or new project
@@ -222,7 +222,7 @@ def setup(path: str):
         else:
             project_path.mkdir(parents=True, exist_ok=True)
 
-        # Copy example files from agentguard package
+        # Copy example files from agentarc package
         package_dir = Path(__file__).parent.parent
         example_dir = package_dir / "examples" / "onchain-agent"
 
@@ -293,7 +293,7 @@ def setup(path: str):
         click.echo(f"  • requirements.txt")
         click.echo(f"  • pyproject.toml")
         click.echo(f"  • .env.example")
-        click.echo(f"  • AGENTGUARD_SETUP.md")
+        click.echo(f"  • AGENTARC_SETUP.md")
         click.echo("\nNext steps:")
         click.echo(f"  1. cd {project_path.name}")
         click.echo(f"  2. cp .env.example .env")

@@ -1,15 +1,15 @@
-# AgentGuard Setup Guide
+# AgentARC Setup Guide
 
 ## Integration Steps
 
-### 1. Install AgentGuard
+### 1. Install AgentARC
 
 ```bash
 # Using pip
-pip install agentguard
+pip install agentarc
 
 # Using poetry
-poetry add agentguard
+poetry add agentarc
 ```
 
 ### 2. Configure Policies
@@ -28,7 +28,7 @@ Edit `policy.yaml` to configure your security policies:
 Add these 3 lines to your agent initialization code:
 
 ```python
-from agentguard import PolicyWalletProvider, PolicyEngine
+from agentarc import PolicyWalletProvider, PolicyEngine
 
 # After creating your base wallet provider
 policy_engine = PolicyEngine(
@@ -43,7 +43,7 @@ agentkit = AgentKit(wallet_provider=policy_wallet, action_providers=[...])
 
 ### 4. Example Integration
 
-**Before (without AgentGuard):**
+**Before (without AgentARC):**
 ```python
 from coinbase_agentkit import AgentKit, CdpEvmWalletProvider
 
@@ -51,10 +51,10 @@ wallet = CdpEvmWalletProvider(config)
 agentkit = AgentKit(wallet_provider=wallet, action_providers=[...])
 ```
 
-**After (with AgentGuard):**
+**After (with AgentARC):**
 ```python
 from coinbase_agentkit import AgentKit, CdpEvmWalletProvider
-from agentguard import PolicyWalletProvider, PolicyEngine
+from agentarc import PolicyWalletProvider, PolicyEngine
 
 # Create base wallet
 wallet = CdpEvmWalletProvider(config)
@@ -144,13 +144,13 @@ simulation:
 
 ## Support
 
-- Documentation: https://github.com/yourusername/agentguard
-- Issues: https://github.com/yourusername/agentguard/issues
+- Documentation: https://github.com/yourusername/agentarc
+- Issues: https://github.com/yourusername/agentarc/issues
 - Examples: See `examples/` directory
 
 ## Security
 
-AgentGuard provides multiple layers of protection:
+AgentARC provides multiple layers of protection:
 1. **Intent Analysis**: Parse transaction intent and calldata
 2. **Policy Validation**: Enforce user-defined rules
 3. **Simulation**: Test execution before sending

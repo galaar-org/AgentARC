@@ -1,7 +1,7 @@
 version: '2.0'
 
-# MASTER SWITCH: Set to false to disable ALL PolicyLayer/AgentGuard checks
-enabled: false
+# MASTER SWITCH: Set to false to disable ALL AgentArc checks
+enabled: true
 
 # PolicyLayer configuration for autonomous portfolio manager
 # KEY FEATURE: No manual blacklist - honeypots detected automatically via simulation!

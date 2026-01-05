@@ -1,5 +1,5 @@
 """
-AgentGuard - Advanced Policy Enforcement for AI Agents
+AgentARC - Advanced Policy Enforcement for AI Agents
 
 A comprehensive security and policy enforcement layer for AI agents:
 - 3-stage validation pipeline (Intent → Validation → Simulation)

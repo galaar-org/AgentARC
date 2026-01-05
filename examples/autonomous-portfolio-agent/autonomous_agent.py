@@ -30,7 +30,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from coinbase_agentkit import CdpEvmWalletProvider, CdpEvmWalletProviderConfig
 
 # Import PolicyLayer components
-from agentguard import PolicyWalletProvider, PolicyEngine
+from agentarc import PolicyWalletProvider, PolicyEngine
 
 from core.agent import AutonomousPortfolioAgent
 from config.portfolio_config import TARGET_ALLOCATION, TOKENS, REBALANCE_INTERVAL

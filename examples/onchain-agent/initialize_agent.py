@@ -16,7 +16,7 @@ from coinbase_agentkit import (
 )
 
 # Import PolicyLayer components
-from agentguard import PolicyWalletProvider, PolicyEngine
+from agentarc import PolicyWalletProvider, PolicyEngine
 
 # Import custom test actions
 from approval_test_actions import approval_test_action_provider

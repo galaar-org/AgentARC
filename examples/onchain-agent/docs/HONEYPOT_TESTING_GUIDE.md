@@ -7,7 +7,7 @@
 
 ## Overview
 
-The honeypot token contract implements 7 real-world scam techniques to test AgentGuard's protection capabilities. The agent now has special actions to interact with this honeypot and demonstrate PolicyLayer's honeypot detection.
+The honeypot token contract implements 7 real-world scam techniques to test AgentARC's protection capabilities. The agent now has special actions to interact with this honeypot and demonstrate PolicyLayer's honeypot detection.
 
 ## Available Agent Actions
 
@@ -214,7 +214,7 @@ Agent: [Explains honeypot detection - tokens cannot be sold back]
 
 ## Honeypot Techniques Demonstrated
 
-| # | Technique | What It Does | How AgentGuard Detects |
+| # | Technique | What It Does | How AgentARC Detects |
 |---|-----------|-------------|----------------------|
 | 1 | Fake `balanceOf` | Shows 100x actual balance | LLM analysis of balance manipulation |
 | 2 | Auto-blacklisting | Blacklists on sell attempt | Detects no Transfer events |

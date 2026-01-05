@@ -1,5 +1,5 @@
 """
-Logging system for AgentGuard with support for any Python logging package
+Logging system for AgentARC with support for any Python logging package
 """
 
 from enum import Enum
@@ -26,7 +26,7 @@ class PolicyLogger:
         level: LogLevel for filtering messages (MINIMAL, INFO, DEBUG)
         logger: Optional logging.Logger instance (or any compatible logger)
         use_emojis: Whether to include emoji prefixes (default: True)
-        name: Logger name (default: "agentguard")
+        name: Logger name (default: "agentarc")
 
     Examples:
         # Use default console logger with emojis
@@ -47,7 +47,7 @@ class PolicyLogger:
         level: LogLevel = LogLevel.INFO,
         logger: Optional[logging.Logger] = None,
         use_emojis: bool = True,
-        name: str = "agentguard"
+        name: str = "agentarc"
     ):
         self.level = level
         self.use_emojis = use_emojis

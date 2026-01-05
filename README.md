@@ -1,15 +1,15 @@
-# AgentGuard - Security Layer for AI Blockchain Agents
+# AgentARC - Security Layer for AI Blockchain Agents
 
 [![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/galaar-org/AgentARC)
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![GitHub](https://img.shields.io/badge/github-galaar-org%2Fagentguard-blue.svg)](https://github.com/galaar-org/AgentARC)
+[![GitHub](https://img.shields.io/badge/github-galaar-org%2Fagentarc-blue.svg)](https://github.com/galaar-org/AgentARC)
 
 **Advanced security and policy enforcement layer for AI blockchain agents with multi-stage validation, transaction simulation, honeypot detection, and LLM-based threat analysis.**
 
 ## 🎯 Overview
 
-AgentGuard provides a comprehensive security framework for AI agents interacting with blockchain networks. It validates all transactions through multiple security stages before execution, protecting against:
+AgentARC provides a comprehensive security framework for AI agents interacting with blockchain networks. It validates all transactions through multiple security stages before execution, protecting against:
 
 - 💰 Unauthorized fund transfers
 - 🎣 Phishing and honeypot tokens
@@ -36,22 +36,22 @@ AgentGuard provides a comprehensive security framework for AI agents interacting
 
 ```bash
 # Install from PyPI (recommended)
-pip install agentguard
+pip install agentarc
 
 # Or install from source
 git clone https://github.com/galaar-org/AgentARC.git
-cd agentguard
+cd agentarc
 pip install -e .
 
 # Verify installation
-agentguard --help
+agentarc --help
 ```
 
 ### Setup Policy Configuration
 
 ```bash
 # Generate default policy.yaml
-agentguard setup
+agentarc setup
 
 # Edit policy.yaml to configure your security rules
 vim policy.yaml
@@ -60,13 +60,13 @@ vim policy.yaml
 ### Integration (3 Lines of Code)
 
 ```python
-from agentguard import PolicyWalletProvider, PolicyEngine
+from agentarc import PolicyWalletProvider, PolicyEngine
 from coinbase_agentkit import AgentKit, CdpEvmWalletProvider
 
 # Create base wallet
 base_wallet = CdpEvmWalletProvider(config)
 
-# Wrap with AgentGuard (add security layer)
+# Wrap with AgentARC (add security layer)
 policy_engine = PolicyEngine(
     config_path="policy.yaml",
     web3_provider=base_wallet,
@@ -100,7 +100,7 @@ python basic_usage.py
 
 ### 2. OnChain Agent (`examples/onchain-agent/`)
 
-Production-ready Coinbase AgentKit chatbot with AgentGuard.
+Production-ready Coinbase AgentKit chatbot with AgentARC.
 
 ```bash
 cd examples/onchain-agent
@@ -144,7 +144,7 @@ python autonomous_agent.py
 
 ## 🛡️ Security Pipeline
 
-AgentGuard validates every transaction through 4 stages:
+AgentARC validates every transaction through 4 stages:
 
 ### Stage 1: Intent Judge
 - Parse transaction calldata
@@ -379,7 +379,7 @@ Automatically detect scam tokens that can be bought but not sold:
 
 **How it works:**
 1. Transaction initiates a token purchase (BUY)
-2. AgentGuard simulates the BUY
+2. AgentARC simulates the BUY
 3. Detects token receipt via Transfer events
 4. Automatically simulates a SELL transaction
 5. If SELL fails → **HONEYPOT DETECTED** → Block original BUY
@@ -524,8 +524,8 @@ python test_complete_system.py
 ## 🏗️ Project Structure
 
 ```
-agentguard/
-├── agentguard/                 # Main package
+agentarc/
+├── agentarc/                 # Main package
 │   ├── __init__.py
 │   ├── __main__.py             # CLI entry point
 │   ├── policy_engine.py        # Multi-stage validation pipeline
@@ -553,7 +553,7 @@ agentguard/
 
 ## 🤝 Compatibility
 
-AgentGuard works with all Coinbase AgentKit wallet providers:
+AgentARC works with all Coinbase AgentKit wallet providers:
 
 - ✅ **CDP EVM Wallet Provider**
 - ✅ **CDP Smart Wallet Provider**
@@ -635,4 +635,4 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for gu
 
 ---
 
-**Protect your AI agents with AgentGuard - Multi-layer security for blockchain interactions** 🛡️
+**Protect your AI agents with AgentARC - Multi-layer security for blockchain interactions** 🛡️

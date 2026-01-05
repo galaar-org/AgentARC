@@ -40,7 +40,7 @@ AgentKit requires a **Wallet Provider** to interact with blockchain networks.
 ### 3. Select Your Action Providers
 Action Providers define what your agent can do. You can use built-in providers or create your own.
 
-### 4. PolicyLayer Integration (AgentGuard)
+### 4. PolicyLayer Integration (AgentARC)
 This example includes **PolicyLayer** - a security framework that validates transactions before execution.
 
 **Features:**

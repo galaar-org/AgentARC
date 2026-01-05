@@ -1,6 +1,6 @@
-# Contributing to AgentGuard
+# Contributing to AgentARC
 
-Thank you for your interest in contributing to AgentGuard! This document provides guidelines for contributing to the project.
+Thank you for your interest in contributing to AgentARC! This document provides guidelines for contributing to the project.
 
 ## Development Setup
 
@@ -13,8 +13,8 @@ Thank you for your interest in contributing to AgentGuard! This document provide
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/agentguard.git
-cd agentguard
+git clone https://github.com/yourusername/agentarc.git
+cd agentarc
 
 # Install in editable mode with development dependencies
 pip install -e ".[dev]"
@@ -26,8 +26,8 @@ poetry install --with dev
 ## Project Structure
 
 ```
-agentguard/
-├── agentguard/           # Main package source code
+agentarc/
+├── agentarc/           # Main package source code
 │   ├── __init__.py        # Package exports
 │   ├── __main__.py        # CLI entry point
 │   ├── policy_engine.py   # Core validation engine
@@ -95,7 +95,7 @@ def validate_transaction(self, tx: Dict[str, Any], from_address: str) -> tuple[b
 
 To add a new policy validator:
 
-1. Create validator class in `agentguard/rules/validators.py`
+1. Create validator class in `agentarc/rules/validators.py`
 2. Inherit from `PolicyValidator` base class
 3. Implement `validate()` method
 4. Register in `PolicyEngine._create_validators()`
@@ -166,7 +166,7 @@ Include:
 - Steps to reproduce
 - Expected behavior
 - Actual behavior
-- AgentGuard version
+- AgentARC version
 - Python version
 - Error messages/logs
 
@@ -206,4 +206,4 @@ By contributing, you agree that your contributions will be licensed under the MI
 
 ---
 
-Thank you for contributing to AgentGuard! 🎉
+Thank you for contributing to AgentARC! 🎉

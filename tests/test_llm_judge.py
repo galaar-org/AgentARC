@@ -18,8 +18,8 @@ from dataclasses import dataclass
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from agentguard.llm_judge import LLMJudge, LLMAnalysis
-from agentguard.calldata_parser import ParsedTransaction
+from agentarc.llm_judge import LLMJudge, LLMAnalysis
+from agentarc.calldata_parser import ParsedTransaction
 
 
 @dataclass

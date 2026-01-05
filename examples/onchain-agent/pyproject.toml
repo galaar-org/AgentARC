@@ -10,9 +10,9 @@ package-mode = false
 python = "^3.10"
 python-dotenv = "^1.0.1"
 # For local development, use path dependency:
- agentguard = {path = "../..", develop = true}
+ agentarc = {path = "../..", develop = true}
 # For published package, use:
-# agentguard = "^0.2.0"
+# agentarc = "^0.2.0"
 coinbase-agentkit = "^0.7.2"
 langchain-openai = "^0.2.4"
 langgraph = "^0.2.39"
