@@ -211,7 +211,7 @@ contract HoneypotTokenTest is Test {
         console.log("  [5] Auto-blacklisting");
         console.log("  [6] External blacklist manager");
         console.log("  [7] Whitelist bypass for insiders");
-        console.log("\nAgentGuard Should Detect:");
+        console.log("\nAgentArc Should Detect:");
         console.log("  - No Transfer events on actual transfer");
         console.log("  - External calls to unknown contract");
         console.log("  - Transfer restrictions");

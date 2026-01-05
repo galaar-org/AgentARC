@@ -13,7 +13,7 @@ pragma solidity ^0.8.20;
  * 5. Hidden external call to blacklist manager
  * 6. Time-locked transfers that never unlock
  *
- * Use this ONLY for testing security detection systems like PolicyLayer/AgentGuard
+ * Use this ONLY for testing security detection systems like AgentArc
  *
  * Based on research from:
  * - https://olympixai.medium.com/erc-20-honeypot-scams-a-beginners-guide-and-advanced-detection-techniques-4019ed2300e8

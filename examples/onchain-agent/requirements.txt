@@ -1,4 +1,4 @@
-# AgentGuard OnChain Agent Dependencies
+#AgentArc OnChain Agent Dependencies
 
 # Core dependencies
 agentarc>=0.2.0

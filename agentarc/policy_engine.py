@@ -62,7 +62,7 @@ class PolicyConfig:
         default_config = {
             "version": "2.0",
 
-            # GLOBAL MASTER SWITCH: Set to false to disable ALL PolicyLayer/AgentGuard checks
+            # GLOBAL MASTER SWITCH: Set to false to disable ALL AgentArc checks
             "enabled": True,
 
             "apply_to": ["all"],

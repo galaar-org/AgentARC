@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Complete AgentGuard System Test
+Complete AgentArc System Test
 
 Tests all features:
 - 3-stage validation pipeline
@@ -287,7 +287,7 @@ def test_logging_levels():
 def main():
     """Run all tests"""
     print("\n" + "="*70)
-    print("AgentGuard Complete System Test Suite")
+    print("AgentArc Complete System Test Suite")
     print("Testing: 3-Stage Validation, All Policy Types, Logging")
     print("="*70)
 
@@ -301,7 +301,7 @@ def main():
     print("\n" + "="*70)
     print("All Tests Complete!")
     print("="*70)
-    print("\n✅ AgentGuard Features Validated:")
+    print("\n✅ AgentArc Features Validated:")
     print("  • 3-Stage Validation Pipeline (Intent → Validation → Simulation)")
     print("  • ETH Value Limits")
     print("  • Address Denylist")

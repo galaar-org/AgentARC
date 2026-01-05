@@ -215,12 +215,6 @@ logger = MetricsLogger()
 logger.print_summary()
 ```
 
-## Support
-
-- **PolicyLayer Issues**: https://github.com/BuildBear/policylayer/issues
-- **AgentKit Issues**: https://github.com/coinbase/agentkit/issues
-- **CDP Support**: https://docs.cdp.coinbase.com/
-
 ## Next Steps
 
 1. ✅ Set up environment and credentials
