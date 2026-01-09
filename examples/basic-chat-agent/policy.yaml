@@ -1,0 +1,127 @@
+# ============================================================
+# AgentARC Security Policy Configuration
+# ============================================================
+# This file defines security rules that protect your AI agent
+# from making malicious or unauthorized blockchain transactions.
+#
+# Learn more: https://github.com/galaar-org/AgentARC
+# ============================================================
+
+version: '2.0'
+
+# Apply these policies to all transactions
+apply_to:
+- all
+
+# Logging configuration
+logging:
+  level: info
+
+# ============================================================
+# SECURITY POLICIES
+# ============================================================
+# Enable/disable specific security rules below.
+# Each policy can be toggled independently.
+# ============================================================
+
+policies:
+  # ETH Transfer Limits
+  - type: eth_value_limit
+    max_value_wei: '1000000000000000000'  # 1 ETH
+    enabled: true
+    description: Limit ETH transfers to 1 ETH per transaction
+
+  # Address Controls
+  - type: address_denylist
+    denied_addresses: []
+    enabled: true
+    description: Block transactions to denied addresses
+
+  - type: address_allowlist
+    allowed_addresses: []
+    enabled: false
+    description: Only allow transactions to approved addresses
+
+  # Token Transfer Limits
+  - type: token_amount_limit
+    max_amount: '1000000000000000000000'  # 1000 tokens
+    enabled: false
+    description: Limit token transfers per transaction
+
+  - type: per_asset_limit
+    asset_limits:
+      - name: USDC
+        address: '0x036CbD53842c5426634e7929541eC2318f3dCF7e'
+        max_amount: '10000000'  # 10 USDC
+        decimals: 6
+      - name: DAI
+        address: '0x6B175474E89094C44Da98b954EedeAC495271d0F'
+        max_amount: '100000000000000000000'  # 100 DAI
+        decimals: 18
+    enabled: true
+    description: Per-asset spending limits
+
+  # Function Controls
+  - type: function_allowlist
+    allowed_functions:
+      - eth_transfer
+      - transfer
+      - approve
+    enabled: false
+    description: Only allow specific function calls
+
+  # Gas Limits
+  - type: gas_limit
+    max_gas: 500000
+    enabled: true
+    description: Limit gas to 500k per transaction
+# ============================================================
+# TRANSACTION SIMULATION
+# ============================================================
+# Test transactions in a sandboxed environment before execution.
+# Requires Tenderly API credentials for advanced features.
+# ============================================================
+
+simulation:
+  enabled: true
+  fail_on_revert: true
+  estimate_gas: true
+  print_trace: true  # Enable detailed Tenderly trace printing
+  description: Simulate transactions before execution
+
+# ============================================================
+# CALLDATA VALIDATION
+# ============================================================
+# Parse and validate transaction calldata to understand intent.
+# ============================================================
+
+calldata_validation:
+  enabled: true
+  strict_mode: false
+  description: Validate and parse transaction calldata
+
+# ============================================================
+# AI-POWERED SECURITY ANALYSIS (LLM Validation)
+# ============================================================
+# Use AI to detect sophisticated attack patterns that rule-based
+# systems might miss. Requires OpenAI or Anthropic API key.
+#
+# Cost: ~$0.003 per transaction with GPT-4o-mini
+# ============================================================
+
+llm_validation:
+  enabled: true
+  provider: openai  # Options: openai, anthropic
+  model: gpt-4o-mini
+  block_threshold: 0.70  # Block if malicious score >= 70%
+  warn_threshold: 0.40   # Warn if malicious score >= 40%
+  description: AI-powered security analysis to detect malicious patterns
+  check_patterns:
+    - hidden_approvals      # Detect hidden token approvals
+    - multiple_approvals    # Multiple approvals in one transaction
+    - unlimited_approvals   # Unlimited token allowances
+    - token_draining        # Token draining attacks
+    - delegatecall_risks    # Dangerous delegatecall usage
+    - reentrancy           # Reentrancy vulnerabilities
+    - honeypot_tokens      # Honeypot token scams
+    - hidden_fees          # Hidden fee mechanisms
