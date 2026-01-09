@@ -190,8 +190,8 @@ Don't be fooled by successful approvals on honeypot tokens!
 
 ### Start the Agent
 ```bash
-# From the examples/onchain-agent directory
-python chat.py
+# From the examples/basic-chat-agent directory
+poetry run python chatbot.py
 ```
 
 ### Example Test Session

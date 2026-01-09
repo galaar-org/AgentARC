@@ -1,30 +1,78 @@
-# Onchain Agent Powered by AgentKit
+# Basic Chat Agent with AgentARC
 
-This is a Python chatbot project bootstrapped with `create-onchain-agent`.  
-It integrates [AgentKit](https://github.com/coinbase/agentkit) to provide AI-driven interactions with on-chain capabilities.
+A secure AI chatbot with blockchain capabilities powered by [AgentKit](https://github.com/coinbase/agentkit) and protected by [AgentARC](https://github.com/galaar-org/AgentARC) - an intelligent security layer that validates transactions before execution.
+
+## What is AgentARC?
+
+AgentARC is a security framework that sits between your AI agent and blockchain networks, preventing malicious transactions through:
+
+- **Rule-based policies**: Spending limits, address allow/deny lists, gas limits
+- **Transaction simulation**: Test transactions before sending them on-chain
+- **Intelligent validation**: AI-powered detection of honeypots, phishing, and hidden approvals
+- **Real-time protection**: Validates every transaction automatically
 
 ## Prerequisites
-
-Before using `create-onchain-agent`, ensure you have the following installed:
 
 - **Python** (3.10 - 3.12) – [Download here](https://www.python.org/downloads/)
 - **Poetry** (latest version) – [Installation guide](https://python-poetry.org/docs/#installation)
 
-## Getting Started
+## Quick Start
 
-First, install dependencies:
+### 1. Install Dependencies
 
-`poetry install`
-
-Then, configure your environment variables:
-
-```sh
-mv .env.local .env
+```bash
+poetry install
 ```
 
-Finally, run the chatbot:
+### 2. Configure Environment
 
-`poetry run python chatbot.py`
+Copy the example environment file and add your API keys:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and add:
+
+```bash
+# Required: OpenAI API key for the agent
+OPENAI_API_KEY=your-openai-api-key
+
+# Required: Coinbase CDP credentials
+CDP_API_KEY_NAME=your-cdp-api-key-name
+CDP_API_KEY_PRIVATE_KEY=your-cdp-private-key
+
+# Optional: For advanced security features
+TENDERLY_ACCESS_KEY=your-tenderly-key
+TENDERLY_ACCOUNT_SLUG=your-account
+TENDERLY_PROJECT_SLUG=your-project
+```
+
+### 3. Run the Agent
+
+```bash
+poetry run python chatbot.py
+```
+
+You should see:
+```
+Starting Agent Swarm...
+Starting chat... Type 'exit' to quit.
+
+You:
+```
+
+### 4. Try It Out
+
+Start with simple commands:
+
+```
+You: What's my wallet address?
+You: Get my wallet balance
+You: Send 0.001 ETH to 0x...
+```
+
+All transactions are automatically validated by AgentARC before execution!
 
 
 ## Configuring Your Agent
@@ -40,8 +88,8 @@ AgentKit requires a **Wallet Provider** to interact with blockchain networks.
 ### 3. Select Your Action Providers
 Action Providers define what your agent can do. You can use built-in providers or create your own.
 
-### 4. PolicyLayer Integration (AgentARC)
-This example includes **PolicyLayer** - a security framework that validates transactions before execution.
+### 4. AgentARC Security Integration
+This example includes **AgentARC** - a security framework that validates transactions before execution.
 
 **Features:**
 - **Rule-based policies**: Spending limits, address allow/deny lists, gas limits
@@ -50,7 +98,7 @@ This example includes **PolicyLayer** - a security framework that validates tran
 
 **Configuration:**
 
-Edit `policy.yaml` to configure your security policies. By default, PolicyLayer uses basic rule-based validation.
+Edit `policy.yaml` to configure your security policies. By default, AgentARC uses basic rule-based validation.
 
 **Enable Intelligent Features:**
 
