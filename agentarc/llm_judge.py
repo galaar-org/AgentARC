@@ -121,13 +121,22 @@ class LLMJudge:
     Supports multiple LLM providers:
     - OpenAI (GPT-4, GPT-4-mini)
     - Anthropic (Claude)
+    - BlockRun (30+ models via x402 micropayments - no API keys needed)
     - Local models via OpenAI-compatible API
 
-    Example:
+    Example with OpenAI:
         judge = LLMJudge(
             provider="openai",
             model="gpt-4-mini",
             api_key=os.getenv("OPENAI_API_KEY")
+        )
+
+    Example with BlockRun (x402 payments - no API key needed):
+        # Set BLOCKRUN_WALLET_KEY env var or pass private_key
+        judge = LLMJudge(
+            provider="blockrun",
+            model="gpt-4o",  # or claude-sonnet, gemini-pro, etc.
+            private_key="0x..."  # or set BLOCKRUN_WALLET_KEY env var
         )
 
         analysis = judge.analyze(
@@ -140,11 +149,28 @@ class LLMJudge:
             print(f"BLOCKED: {analysis.reason}")
     """
 
+    # BlockRun model aliases for convenience
+    BLOCKRUN_MODELS = {
+        "gpt-4o": "openai/gpt-4o",
+        "gpt-4o-mini": "openai/gpt-4o-mini",
+        "gpt-4-mini": "openai/gpt-4o-mini",  # Common alias
+        "o1": "openai/o1",
+        "o1-mini": "openai/o1-mini",
+        "claude-sonnet": "anthropic/claude-sonnet-4",
+        "claude-haiku": "anthropic/claude-haiku-3.5",
+        "gemini-pro": "google/gemini-2.5-pro",
+        "gemini-flash": "google/gemini-2.5-flash",
+        "deepseek": "deepseek/deepseek-chat",
+        "deepseek-reasoner": "deepseek/deepseek-reasoner",
+        "llama": "meta/llama-4-maverick",
+    }
+
     def __init__(
         self,
         provider: str = "openai",
         model: str = "gpt-4-mini",
         api_key: Optional[str] = None,
+        private_key: Optional[str] = None,
         block_threshold: float = 0.70,
         warn_threshold: float = 0.40,
         max_cost_per_analysis: float = 0.05,
@@ -154,9 +180,11 @@ class LLMJudge:
         Initialize LLM validation
 
         Args:
-            provider: LLM provider (openai, anthropic, local)
+            provider: LLM provider (openai, anthropic, local, blockrun)
             model: Model name (gpt-4, gpt-4-mini, claude-opus-4, etc.)
             api_key: API key (or set OPENAI_API_KEY/ANTHROPIC_API_KEY env var)
+            private_key: Wallet private key for BlockRun x402 payments
+                        (or set BLOCKRUN_WALLET_KEY env var)
             block_threshold: Confidence threshold to block (default: 0.70)
             warn_threshold: Confidence threshold to warn (default: 0.40)
             max_cost_per_analysis: Max cost per analysis in USD
@@ -172,6 +200,7 @@ class LLMJudge:
         # Initialize client
         self._client = None
         self._warned = False
+        self._private_key = private_key
 
         if self.provider == "openai":
             self._api_key = api_key or os.getenv("OPENAI_API_KEY")
@@ -190,6 +219,23 @@ class LLMJudge:
                     self._client = Anthropic(api_key=self._api_key)
                 except ImportError:
                     self.logger.warning("Warning: anthropic package not installed. Run: pip install anthropic")
+
+        elif self.provider == "blockrun":
+            # BlockRun uses x402 payments via blockrun-llm SDK
+            # Private key can be passed directly or via BLOCKRUN_WALLET_KEY env var
+            key = self._private_key or os.getenv("BLOCKRUN_WALLET_KEY")
+            if key:
+                try:
+                    from blockrun_llm import LLMClient
+                    self._client = LLMClient(private_key=key)
+                except ImportError:
+                    self.logger.warning("Warning: blockrun-llm package not installed.")
+                    self.logger.warning("   Run: pip install blockrun-llm")
+                except ValueError as e:
+                    self.logger.warning(f"Warning: BlockRun initialization failed: {e}")
+            else:
+                self.logger.warning("Warning: BlockRun provider requires a wallet private key.")
+                self.logger.warning("   Set BLOCKRUN_WALLET_KEY env var or pass private_key parameter.")
 
         elif self.provider == "local":
             # OpenAI-compatible local API
@@ -248,6 +294,8 @@ class LLMJudge:
                 return self._analyze_with_openai(prompt)
             elif self.provider == "anthropic":
                 return self._analyze_with_anthropic(prompt)
+            elif self.provider == "blockrun":
+                return self._analyze_with_blockrun(prompt)
 
         except Exception as e:
             self.logger.warning(f"LLM analysis error: {str(e)}")
@@ -282,6 +330,34 @@ class LLMJudge:
         )
 
         analysis_text = response.content[0].text
+        return self._parse_analysis(analysis_text)
+
+    def _analyze_with_blockrun(self, prompt: str) -> LLMAnalysis:
+        """
+        Analyze using BlockRun AI Gateway with x402 payments.
+
+        BlockRun provides access to 30+ models (GPT-4o, Claude, Gemini, etc.)
+        with pay-per-use via USDC micropayments. No API keys needed.
+
+        Learn more: https://blockrun.ai
+        """
+        # Resolve model alias if needed
+        model = self.BLOCKRUN_MODELS.get(self.model, self.model)
+
+        # Use the blockrun-llm SDK client (initialized in __init__)
+        # The SDK handles all x402 payment flow automatically
+        result = self._client.chat_completion(
+            model=model,
+            messages=[
+                {"role": "system", "content": self._get_system_prompt()},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.1,
+            max_tokens=1000,
+        )
+
+        # Extract analysis text from response
+        analysis_text = result.choices[0].message.content
         return self._parse_analysis(analysis_text)
 
     def _parse_analysis(self, analysis_text: str) -> LLMAnalysis:
