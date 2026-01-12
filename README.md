@@ -7,26 +7,31 @@
 [![PyPI version](https://img.shields.io/pypi/v/agentarc.svg)](https://pypi.org/project/agentarc/)
 
 
-**Advanced security and policy enforcement layer for AI blockchain agents with multi-stage validation, transaction simulation, honeypot detection, and LLM-based threat analysis.**
+**Advanced security and policy enforcement layer for AI blockchain agents with multi-stage validation, transaction simulation, and threat detection across DeFi + smart-contract attack surfaces, with LLM-based risk analysis.**
 
 ## 🎯 Overview
 
-AgentARC provides a comprehensive security framework for AI agents interacting with blockchain networks. It validates all transactions through multiple security stages before execution, protecting against:
+AgentARC provides a comprehensive security framework for AI agents interacting with blockchain networks. It validates all transactions through multiple security stages before execution, reducing exposure to the broader DeFi threat surface and common smart-contract attack planes, including:
 
-- 💰 Unauthorized fund transfers
-- 🎣 Phishing and honeypot tokens
-- 💣 Malicious smart contracts
-- 🔓 Hidden token approvals
-- 🌊 Flash loan attacks
-- 🔄 Reentrancy exploits
+- 💰 Unauthorized fund transfers and unexpected value movement
+- 🔓 Hidden or unlimited token approvals and allowance abuse
+- 🧨 Malicious smart contracts and hostile call chains (e.g., delegatecall to untrusted code)
+- 🎣 Token traps (honeypots, sell-blocks, malicious fee mechanics)
+- 🌊 Liquidity and price-manipulation patterns (context-dependent)
+- 🔄 Reentrancy-style execution hazards and unexpected re-calls
+- 🧾 Suspicious fund-flow anomalies and downstream interactions that don’t match intent
+
+These are representative examples, not an exhaustive list. AgentARC is designed to expand with more DeFi and smart-contract threat cases over time.
+
 
 ### Key Features
 
-- ✅ **Multi-Stage Validation Pipeline**: Intent → Policies → Simulation → LLM Analysis
+
+- ✅ **Multi-Stage Validation Pipeline**: Intent → Policies → Simulation → Threat Detection
 - ✅ **Comprehensive Policy Engine**: 7 policy types for granular control
 - ✅ **Transaction Simulation**: Tenderly integration for detailed execution traces
-- ✅ **Honeypot Detection**: Automatic buy/sell simulation to detect scam tokens
-- ✅ **LLM-based Security**: AI-powered malicious activity detection
+- ✅ **Threat Detection (Includes Honeypots)**: Automated checks for token traps and other suspicious patterns
+- ✅ **Optional LLM-based Security**: AI-powered malicious activity detection and risk scoring
 - ✅ **Zero Agent Modifications**: Pure wrapper pattern for AgentKit
 - ✅ **Asset Change Tracking**: Monitor balance changes before execution
 
@@ -575,14 +580,14 @@ Same 3-line integration pattern for all wallet types!
 
 ## 🔒 Security Best Practices
 
-1. **Start with restrictive policies** - Use low limits and gradually increase
-2. **Enable simulation** - Catch failures before sending transactions
-3. **Use Tenderly** - Get detailed execution traces and asset changes
-4. **Enable LLM validation** - Add AI-powered threat detection
-5. **Test on testnet** - Validate policies on Base Sepolia before mainnet
-6. **Monitor logs** - Review transaction validations regularly
-7. **Keep denylists updated** - Add known malicious addresses
-8. **Enable honeypot detection** - Protect against scam tokens automatically
+- **Start with restrictive policies** — Use low limits and gradually increase  
+- **Enable simulation** — Catch failures before sending transactions  
+- **Use Tenderly** — Get detailed execution traces and asset changes  
+- **Enable optional LLM validation** — Add AI-powered risk analysis where useful  
+- **Test on testnet** — Validate policies on Base Sepolia before mainnet  
+- **Monitor logs** — Review transaction validations regularly  
+- **Keep denylists updated** — Add known malicious addresses  
+- **Enable threat checks** — Automatically catch token traps (honeypots and related patterns) and expand coverage over time  
 
 ---
 
