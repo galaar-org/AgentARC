@@ -151,7 +151,7 @@ def initialize_agent(config, use_policy_layer=True, policy_config_path="policy.y
             llm,
             tools=tools,
             checkpointer=memory,
-            state_modifier=AGENT_INSTRUCTIONS,
+            prompt=AGENT_INSTRUCTIONS,
         ),
         wallet_provider
     )

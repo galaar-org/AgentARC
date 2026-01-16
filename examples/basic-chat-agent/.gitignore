@@ -41,4 +41,6 @@ poetry.lock
 
 # Project specific
 wallet_data*.txt
-.env.local 
+.env.local
+frontend
+.langgraph_api

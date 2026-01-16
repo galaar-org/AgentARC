@@ -3,12 +3,13 @@ Advanced Policy Engine with 3-stage validation pipeline
 """
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 import yaml
 
 from .logger import PolicyLogger, LogLevel
 from .calldata_parser import CalldataParser, ParsedTransaction
 from .simulator import TransactionSimulator, SimulationResult
+from .events import EventEmitter, ValidationEvent, ValidationStage, EventStatus
 from .rules import (
     ValidationResult,
     AddressDenylistValidator,
@@ -203,7 +204,8 @@ class PolicyEngine:
         self,
         config_path: Optional[str] = None,
         web3_provider: Optional[Any] = None,
-        chain_id: Optional[int] = None
+        chain_id: Optional[int] = None,
+        event_callback: Optional[Callable[[ValidationEvent], None]] = None
     ):
         """
         Initialize policy engine
@@ -212,7 +214,13 @@ class PolicyEngine:
             config_path: Path to policy.yaml configuration file
             web3_provider: Web3 instance or wallet provider for simulation
             chain_id: Chain ID for Sentio simulation (optional)
+            event_callback: Optional callback function for validation events
         """
+        # Initialize event emitter
+        self.event_emitter = EventEmitter()
+        if event_callback:
+            self.event_emitter.add_callback(event_callback)
+
         if config_path:
             self.config = PolicyConfig.load(config_path)
         else:
@@ -310,14 +318,35 @@ class PolicyEngine:
         # ============================================================
         if not self.config.enabled:
             self.logger.minimal("⚠️  POLICYLAYER DISABLED: All checks bypassed")
+            self.event_emitter.emit(
+                ValidationStage.COMPLETED.value,
+                EventStatus.SKIPPED.value,
+                "PolicyLayer disabled via config",
+                {"reason": "disabled"}
+            )
             return True, "PolicyLayer disabled via config"
 
         self.logger.section("POLICYLAYER: Validating Transaction")
+
+        # Emit validation started event
+        self.event_emitter.emit(
+            ValidationStage.STARTED.value,
+            EventStatus.STARTED.value,
+            "Starting transaction validation",
+            {"to": transaction.get("to", ""), "value": str(transaction.get("value", 0))}
+        )
 
         # ============================================================
         # STAGE 1: INTENT JUDGE - Parse Transaction Intent
         # ============================================================
         self.logger.subsection("Stage 1: Intent Analysis")
+
+        # Emit intent analysis started
+        self.event_emitter.emit(
+            ValidationStage.INTENT_ANALYSIS.value,
+            EventStatus.STARTED.value,
+            "Analyzing transaction intent"
+        )
 
         parsed_tx = self.parser.parse(transaction)
 
@@ -326,6 +355,20 @@ class PolicyEngine:
         self.logger.info(f"→ Value: {parsed_tx.value / 1e18:.6f} ETH")
         if parsed_tx.function_name:
             self.logger.info(f"→ Function: {parsed_tx.function_name}")
+
+        # Emit intent analysis completed
+        self.event_emitter.emit(
+            ValidationStage.INTENT_ANALYSIS.value,
+            EventStatus.PASSED.value,
+            f"Transaction to {parsed_tx.to[:10]}...",
+            {
+                "to": parsed_tx.to,
+                "value_eth": parsed_tx.value / 1e18,
+                "function": parsed_tx.function_name or "unknown",
+                "recipient": parsed_tx.recipient_address,
+                "token_amount": str(parsed_tx.token_amount) if parsed_tx.token_amount else None
+            }
+        )
 
         if parsed_tx.function_selector:
             self.logger.debug(f"Selector: {parsed_tx.function_selector}")
@@ -349,6 +392,13 @@ class PolicyEngine:
         self.logger.subsection("Stage 2: Policy Validation")
         self.logger.debug("Running policy validators...")
 
+        # Emit policy validation started
+        self.event_emitter.emit(
+            ValidationStage.POLICY_VALIDATION.value,
+            EventStatus.STARTED.value,
+            "Running policy validators"
+        )
+
         # Run all validators
         for i, validator in enumerate(self.validators, 1):
             if not validator.enabled:
@@ -362,9 +412,30 @@ class PolicyEngine:
             if not result.passed:
                 self.logger.error(f"Policy violation: {result.reason}")
                 self.logger.minimal(f"❌ BLOCKED: {result.reason}")
+                # Emit policy validation failed event
+                self.event_emitter.emit(
+                    ValidationStage.POLICY_VALIDATION.value,
+                    EventStatus.FAILED.value,
+                    f"Policy violation: {validator.name}",
+                    {"rule": validator.name, "reason": result.reason}
+                )
+                # Emit final blocked event
+                self.event_emitter.emit(
+                    ValidationStage.COMPLETED.value,
+                    EventStatus.FAILED.value,
+                    f"BLOCKED: {result.reason}",
+                    {"stage": "policy_validation", "rule": validator.name, "reason": result.reason}
+                )
                 return False, result.reason
 
             self.logger.info(f"  ✓ {validator.name}: PASSED", prefix="  ")
+            # Emit individual policy passed
+            self.event_emitter.emit(
+                ValidationStage.POLICY_VALIDATION.value,
+                EventStatus.INFO.value,
+                f"{validator.name}: PASSED",
+                {"rule": validator.name, "status": "passed"}
+            )
 
         # Gas limit check (needs raw transaction)
         gas_limit_policy = next((p for p in self.config.policies if p.get("type") == "gas_limit" and p.get("enabled")), None)
@@ -378,9 +449,34 @@ class PolicyEngine:
                 reason = f"Gas {tx_gas} exceeds limit {max_gas}"
                 self.logger.error(f"Policy violation: {reason}")
                 self.logger.minimal(f"❌ BLOCKED: {reason}")
+                self.event_emitter.emit(
+                    ValidationStage.POLICY_VALIDATION.value,
+                    EventStatus.FAILED.value,
+                    f"Gas limit exceeded",
+                    {"rule": "gas_limit", "max_gas": max_gas, "tx_gas": tx_gas, "reason": reason}
+                )
+                self.event_emitter.emit(
+                    ValidationStage.COMPLETED.value,
+                    EventStatus.FAILED.value,
+                    f"BLOCKED: {reason}",
+                    {"stage": "policy_validation", "rule": "gas_limit", "reason": reason}
+                )
                 return False, reason
 
             self.logger.info(f"  ✓ gas_limit: PASSED", prefix="  ")
+            self.event_emitter.emit(
+                ValidationStage.POLICY_VALIDATION.value,
+                EventStatus.INFO.value,
+                "gas_limit: PASSED",
+                {"rule": "gas_limit", "status": "passed"}
+            )
+
+        # Emit policy validation completed
+        self.event_emitter.emit(
+            ValidationStage.POLICY_VALIDATION.value,
+            EventStatus.PASSED.value,
+            "All policy validators passed"
+        )
 
         # ============================================================
         # STAGE 3: SIMULATION - Test Execution
@@ -392,11 +488,30 @@ class PolicyEngine:
             self.logger.subsection("Stage 3: Transaction Simulation")
             self.logger.debug("Simulating transaction execution...")
 
+            # Emit simulation started
+            self.event_emitter.emit(
+                ValidationStage.SIMULATION.value,
+                EventStatus.STARTED.value,
+                "Simulating transaction execution"
+            )
+
             network_id = str(self.chain_id) if self.chain_id else "1"
             tenderly_result = self.tenderly_simulator.simulate(transaction, from_address, network_id=network_id)
 
             if tenderly_result and tenderly_result.success:
                 self.logger.success(f"✓ Simulation passed (gas: {tenderly_result.gas_used})")
+                # Emit simulation passed
+                self.event_emitter.emit(
+                    ValidationStage.SIMULATION.value,
+                    EventStatus.PASSED.value,
+                    f"Simulation passed (gas: {tenderly_result.gas_used})",
+                    {
+                        "gas_used": tenderly_result.gas_used,
+                        "success": True,
+                        "asset_changes": len(tenderly_result.asset_changes) if tenderly_result.asset_changes else 0,
+                        "logs": len(tenderly_result.logs) if tenderly_result.logs else 0
+                    }
+                )
 
                 # Show asset changes only in debug mode
                 if tenderly_result.asset_changes:
@@ -420,9 +535,28 @@ class PolicyEngine:
                     reason = f"Tenderly simulation failed: {tenderly_result.error}"
                     self.logger.error(reason)
                     self.logger.minimal(f"❌ BLOCKED: Transaction would fail")
+                    # Emit simulation failed
+                    self.event_emitter.emit(
+                        ValidationStage.SIMULATION.value,
+                        EventStatus.FAILED.value,
+                        "Transaction would revert",
+                        {"error": tenderly_result.error, "success": False}
+                    )
+                    self.event_emitter.emit(
+                        ValidationStage.COMPLETED.value,
+                        EventStatus.FAILED.value,
+                        f"BLOCKED: Transaction would fail",
+                        {"stage": "simulation", "reason": reason}
+                    )
                     return False, reason
                 else:
                     self.logger.warning(f"Tenderly simulation failed but fail_on_revert=False")
+                    self.event_emitter.emit(
+                        ValidationStage.SIMULATION.value,
+                        EventStatus.WARNING.value,
+                        "Simulation failed but continuing (fail_on_revert=False)",
+                        {"error": tenderly_result.error}
+                    )
 
         # Fallback to basic simulation if Tenderly not available or failed
         elif self.config.simulation.get("enabled", False) and from_address:
@@ -458,6 +592,13 @@ class PolicyEngine:
             self.logger.subsection("Stage 3.5: Honeypot Detection")
             self.logger.debug("Checking if token can be sold back (honeypot detection)...")
 
+            # Emit honeypot detection started
+            self.event_emitter.emit(
+                ValidationStage.HONEYPOT_DETECTION.value,
+                EventStatus.STARTED.value,
+                "Checking for honeypot tokens"
+            )
+
             is_honeypot, honeypot_reason = self._check_honeypot_token(
                 transaction=transaction,
                 parsed_tx=parsed_tx,
@@ -471,9 +612,29 @@ class PolicyEngine:
                 self.logger.error(f"{'🚨 ' * 30}\n")
                 self.logger.error(f"Reason: {honeypot_reason}")
                 self.logger.minimal(f"\n❌ BLOCKED: {honeypot_reason}\n")
+                # Emit honeypot detected
+                self.event_emitter.emit(
+                    ValidationStage.HONEYPOT_DETECTION.value,
+                    EventStatus.FAILED.value,
+                    "HONEYPOT TOKEN DETECTED!",
+                    {"is_honeypot": True, "reason": honeypot_reason}
+                )
+                self.event_emitter.emit(
+                    ValidationStage.COMPLETED.value,
+                    EventStatus.FAILED.value,
+                    f"BLOCKED: {honeypot_reason}",
+                    {"stage": "honeypot_detection", "reason": honeypot_reason}
+                )
                 return False, honeypot_reason
             else:
                 self.logger.success("No honeypot detected - token can be sold normally")
+                # Emit honeypot check passed
+                self.event_emitter.emit(
+                    ValidationStage.HONEYPOT_DETECTION.value,
+                    EventStatus.PASSED.value,
+                    "No honeypot detected - token can be sold normally",
+                    {"is_honeypot": False}
+                )
 
         # ============================================================
         # STAGE 4: LLM VALIDATION - Intelligent Malicious Activity Detection
@@ -521,6 +682,14 @@ class PolicyEngine:
         # ============================================================
         self.logger.minimal("✅ ALLOWED: All security checks passed")
         self.logger.success("Transaction approved for execution")
+
+        # Emit final approved event
+        self.event_emitter.emit(
+            ValidationStage.COMPLETED.value,
+            EventStatus.PASSED.value,
+            "ALLOWED: All security checks passed",
+            {"approved": True}
+        )
 
         return True, "All policies passed"
 

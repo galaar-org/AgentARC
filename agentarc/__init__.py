@@ -7,6 +7,7 @@ A comprehensive security and policy enforcement layer for AI agents:
 - Transaction simulation before execution
 - Calldata parsing and integrity verification
 - Configurable logging (minimal, info, debug)
+- Event streaming for frontend integration
 
 Compatible with Coinbase AgentKit and other blockchain agent frameworks.
 """
@@ -14,6 +15,13 @@ Compatible with Coinbase AgentKit and other blockchain agent frameworks.
 from .wallet_wrapper import PolicyWalletProvider, PolicyViolationError
 from .policy_engine import PolicyEngine, PolicyConfig
 from .logger import PolicyLogger, LogLevel
+from .events import (
+    ValidationEvent,
+    ValidationStage,
+    EventStatus,
+    EventEmitter,
+    ValidationEventCollector,
+)
 
 __version__ = "0.1.0"
 __all__ = [
@@ -23,4 +31,10 @@ __all__ = [
     "PolicyConfig",
     "PolicyLogger",
     "LogLevel",
+    # Event streaming
+    "ValidationEvent",
+    "ValidationStage",
+    "EventStatus",
+    "EventEmitter",
+    "ValidationEventCollector",
 ]
