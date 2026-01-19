@@ -10,7 +10,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
@@ -42,5 +41,4 @@ poetry.lock
 # Project specific
 wallet_data*.txt
 .env.local
-frontend
 .langgraph_api
