@@ -3,7 +3,7 @@ import { nanoid } from 'nanoid';
 
 export const runtime = 'edge';
 
-const BACKEND_URL = "https://gardening-environmental-crossing-strategic.trycloudflare.com/chat";
+const BACKEND_URL = "http://localhost:2024/chat";
 const TIMEOUT_MS = 30000;
 
 async function fetchFromBackend(message: string, threadId: string): Promise<Response> {

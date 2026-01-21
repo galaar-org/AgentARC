@@ -48,21 +48,30 @@ TENDERLY_ACCOUNT_SLUG=your-account
 TENDERLY_PROJECT_SLUG=your-project
 ```
 
-### 3. Run the Agent
+### 3. Run the Server
 
 ```bash
-poetry run python chatbot.py
+./start-server.sh
 ```
 
-You should see:
-```
-Starting Agent Swarm...
-Starting chat... Type 'exit' to quit.
+The API server will start on http://localhost:2024 with documentation at http://localhost:2024/docs
 
-You:
+### 4. Setup and Run Frontend
+
+Navigate to the frontend directory and install dependencies:
+
+```bash
+cd frontend
+pnpm install
 ```
 
-### 4. Try It Out
+Run the development server:
+
+```bash
+pnpm run dev
+```
+
+### 5. Try It Out
 
 Start with simple commands:
 

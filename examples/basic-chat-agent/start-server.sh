@@ -9,4 +9,4 @@ echo "API docs: http://localhost:2024/docs"
 echo ""
 
 # Use asyncio loop instead of uvloop (required for nest_asyncio compatibility)
-uvicorn server:app --reload --host 0.0.0.0 --port 2024 --loop asyncio
+poetry run uvicorn server:app --reload --host 0.0.0.0 --port 2024 --loop asyncio
