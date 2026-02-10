@@ -69,6 +69,16 @@ from .types import (
     WalletInfo,
 )
 
+# Events
+from .events import (
+    ValidationStage,
+    EventStatus,
+    ValidationEvent,
+    EventEmitter,
+    ValidationEventCollector,
+    EventCallback,
+)
+
 __all__ = [
     # Configuration
     "PolicyConfig",
@@ -108,4 +118,11 @@ __all__ = [
     "LLMAnalysisDict",
     "WalletType",
     "WalletInfo",
+    # Events
+    "ValidationStage",
+    "EventStatus",
+    "ValidationEvent",
+    "EventEmitter",
+    "ValidationEventCollector",
+    "EventCallback",
 ]

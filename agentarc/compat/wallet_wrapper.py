@@ -6,8 +6,8 @@ from typing import Any, Callable, Dict, List, Optional
 from decimal import Decimal
 from web3 import Web3
 
-from .logger import PolicyLogger, LogLevel
-from .events import ValidationEvent, ValidationEventCollector
+from ..log import PolicyLogger, LogLevel
+from ..events import ValidationEvent, ValidationEventCollector
 
 # Try to import WalletProvider from AgentKit
 # If not available, create a minimal base class for compatibility

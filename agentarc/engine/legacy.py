@@ -1,16 +1,32 @@
 """
-Advanced Policy Engine with 3-stage validation pipeline
+Advanced Policy Engine with 4-stage validation pipeline.
+
+This module provides the core PolicyEngine class that orchestrates
+transaction validation through multiple stages:
+1. Intent Analysis - Parse and understand transaction intent
+2. Policy Validation - Check against configured policies
+3. Simulation - Test execution (basic or Tenderly)
+4. LLM Analysis - AI-powered malicious activity detection
+5. Final Judge - Allow or block
+
+Example:
+    >>> from agentarc import PolicyEngine
+    >>>
+    >>> engine = PolicyEngine(config_path="policy.yaml")
+    >>> passed, reason = engine.validate_transaction(tx, from_address)
+    >>> if not passed:
+    ...     print(f"Blocked: {reason}")
 """
 
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
-import yaml
+from typing import Any, Callable, Dict, List, Optional, Union
+import os
 
-from .logger import PolicyLogger, LogLevel
-from .calldata_parser import CalldataParser, ParsedTransaction
-from .simulator import TransactionSimulator, SimulationResult
-from .events import EventEmitter, ValidationEvent, ValidationStage, EventStatus
-from .rules import (
+from ..log import PolicyLogger, LogLevel
+from ..parsers import CalldataParser, ParsedTransaction
+from ..simulators import TransactionSimulator, SimulationResult
+from ..events import EventEmitter, ValidationEvent, ValidationStage, EventStatus
+from ..rules import (
     ValidationResult,
     AddressDenylistValidator,
     AddressAllowlistValidator,
@@ -20,213 +36,196 @@ from .rules import (
     FunctionAllowlistValidator,
 )
 
+# Import core types and interfaces
+from ..core.config import PolicyConfig
+from ..core.interfaces import (
+    LoggerProtocol,
+    SimulatorProtocol,
+    CalldataParserProtocol,
+    LLMJudgeProtocol,
+)
+
 # Import advanced simulation (optional)
 try:
-    from .simulators.tenderly import TenderlySimulator
+    from ..simulators.tenderly import TenderlySimulator, TenderlySimulationResult
     TENDERLY_AVAILABLE = True
 except ImportError:
+    TenderlySimulator = None  # type: ignore
+    TenderlySimulationResult = None  # type: ignore
     TENDERLY_AVAILABLE = False
 
 # Import LLM judge (optional)
 try:
-    from .llm_judge import LLMJudge
+    from ..analysis import LLMJudge, LLMAnalysis
     LLM_JUDGE_AVAILABLE = True
 except ImportError:
+    LLMJudge = None  # type: ignore
+    LLMAnalysis = None  # type: ignore
     LLM_JUDGE_AVAILABLE = False
 
 
-class PolicyConfig:
-    """Configuration for policy enforcement"""
-
-    def __init__(self, config_dict: Dict[str, Any]):
-        self.config = config_dict
-        self.version = config_dict.get("version", "1.0")
-        # GLOBAL MASTER SWITCH: If enabled=false, ALL checks are disabled
-        self.enabled = config_dict.get("enabled", True)
-        self.policies = config_dict.get("policies", [])
-        self.simulation = config_dict.get("simulation", {})
-        self.calldata_validation = config_dict.get("calldata_validation", {})
-        self.logging = config_dict.get("logging", {})
-        # NEW: Advanced features
-        self.llm_validation = config_dict.get("llm_validation", {})
-
-    @classmethod
-    def load(cls, path: str | Path) -> "PolicyConfig":
-        """Load configuration from YAML file"""
-        with open(path) as f:
-            data = yaml.safe_load(f)
-        return cls(data)
-
-    @classmethod
-    def create_default(cls, output_path: str | Path):
-        """Create a comprehensive default policy configuration file"""
-        default_config = {
-            "version": "2.0",
-
-            # GLOBAL MASTER SWITCH: Set to false to disable ALL AgentArc checks
-            "enabled": True,
-
-            "apply_to": ["all"],
-
-            # Logging configuration
-            "logging": {
-                "level": "info"  # minimal, info, debug
-            },
-
-            # Policies
-            "policies": [
-                {
-                    "type": "eth_value_limit",
-                    "max_value_wei": "1000000000000000000",  # 1 ETH
-                    "enabled": True,
-                    "description": "Limit ETH transfers to 1 ETH per transaction"
-                },
-                {
-                    "type": "address_denylist",
-                    "denied_addresses": [
-                        # Add sanctioned/malicious addresses here
-                        # "0x...",
-                    ],
-                    "enabled": True,
-                    "description": "Block transactions to denied addresses"
-                },
-                {
-                    "type": "address_allowlist",
-                    "allowed_addresses": [
-                        # Add approved addresses here (empty = allow all)
-                        # "0x...",
-                    ],
-                    "enabled": False,  # Disabled by default
-                    "description": "Only allow transactions to approved addresses"
-                },
-                {
-                    "type": "token_amount_limit",
-                    "max_amount": "1000000000000000000000",  # 1000 tokens (18 decimals)
-                    "enabled": False,
-                    "description": "Limit token transfers per transaction"
-                },
-                {
-                    "type": "per_asset_limit",
-                    "asset_limits": [
-                        {
-                            "name": "USDC",
-                            "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",  # USDC mainnet
-                            "max_amount": "10000000",  # 10 USDC (6 decimals)
-                            "decimals": 6
-                        },
-                        {
-                            "name": "DAI",
-                            "address": "0x6B175474E89094C44Da98b954EedeAC495271d0F",  # DAI mainnet
-                            "max_amount": "100000000000000000000",  # 100 DAI (18 decimals)
-                            "decimals": 18
-                        }
-                    ],
-                    "enabled": True,
-                    "description": "Per-asset spending limits"
-                },
-                {
-                    "type": "function_allowlist",
-                    "allowed_functions": [
-                        "eth_transfer",
-                        "transfer",
-                        "approve",
-                        # Add more allowed functions as needed
-                    ],
-                    "enabled": False,
-                    "description": "Only allow specific function calls"
-                },
-                {
-                    "type": "gas_limit",
-                    "max_gas": 500000,
-                    "enabled": True,
-                    "description": "Limit gas to 500k per transaction"
-                }
-            ],
-
-            # Simulation settings
-            "simulation": {
-                "enabled": True,
-                "fail_on_revert": True,
-                "estimate_gas": True,
-                "description": "Simulate transactions before execution"
-            },
-
-            # Calldata validation
-            "calldata_validation": {
-                "enabled": True,
-                "strict_mode": False,
-                "description": "Validate and parse transaction calldata"
-            },
-
-            # LLM-based Security Analysis
-            "llm_validation": {
-                "enabled": False,  # Disabled by default (requires API key)
-                "provider": "openai",
-                "model": "gpt-4o-mini",
-                "description": "AI-powered pattern detection for advanced threats",
-                "warn_threshold": 0.40,
-                "block_threshold": 0.70,
-                "patterns": [
-                    "unlimited_approvals",
-                    "unusual_fund_flows",
-                    "hidden_fees",
-                    "honeypot_indicators",
-                    "fake_token_balances",
-                    "transfer_restrictions",
-                    "reentrancy",
-                    "delegatecall_risks",
-                    "time_lock_manipulation"
-                ],
-                "honeypot_detection": {
-                    "enabled": True,
-                    "description": "Automatically detect honeypot tokens via simulation"
-                }
-            }
-        }
-
-        with open(output_path, "w") as f:
-            yaml.dump(default_config, f, default_flow_style=False, sort_keys=False)
+# Re-export PolicyConfig for backward compatibility
+# (Now defined in agentarc.core.config)
+__all__ = ["PolicyEngine", "PolicyConfig"]
 
 
 class PolicyEngine:
     """
-    Advanced policy enforcement engine with 4-stage validation
+    Advanced policy enforcement engine with 4-stage validation.
 
     Pipeline:
-    1. Intent Judge - Parse and understand transaction intent
-    2. Calldata/Tx Validation - Validate against policies
-    3. Simulation - Test execution (basic or Sentio)
-    4. LLM Analysis - Intelligent malicious activity detection (optional)
-    5. Final Judge - Allow or block
+        1. Intent Judge - Parse and understand transaction intent
+        2. Calldata/Tx Validation - Validate against policies
+        3. Simulation - Test execution (basic or Tenderly)
+        4. LLM Analysis - Intelligent malicious activity detection (optional)
+        5. Final Judge - Allow or block
+
+    The engine supports dependency injection for all components, enabling
+    easy testing and customization.
+
+    Attributes:
+        config: PolicyConfig instance with validation rules
+        logger: Logger instance for output
+        parser: CalldataParser for transaction parsing
+        simulator: Basic transaction simulator
+        tenderly_simulator: Tenderly simulator (optional)
+        llm_validator: LLM-based validator (optional)
+        validators: List of policy validators
+        event_emitter: Event emitter for progress tracking
+
+    Example:
+        >>> # Basic usage
+        >>> engine = PolicyEngine(config_path="policy.yaml")
+        >>> passed, reason = engine.validate_transaction(tx, from_address)
+        >>>
+        >>> # With dependency injection for testing
+        >>> engine = PolicyEngine(
+        ...     config=my_config,
+        ...     logger=mock_logger,
+        ...     tenderly_simulator=mock_tenderly,
+        ... )
     """
 
     def __init__(
         self,
         config_path: Optional[str] = None,
+        config: Optional[PolicyConfig] = None,
         web3_provider: Optional[Any] = None,
         chain_id: Optional[int] = None,
-        event_callback: Optional[Callable[[ValidationEvent], None]] = None
+        event_callback: Optional[Callable[[ValidationEvent], None]] = None,
+        # Dependency injection parameters
+        logger: Optional[LoggerProtocol] = None,
+        calldata_parser: Optional[CalldataParserProtocol] = None,
+        simulator: Optional[SimulatorProtocol] = None,
+        tenderly_simulator: Optional[SimulatorProtocol] = None,
+        llm_judge: Optional[LLMJudgeProtocol] = None,
     ):
         """
-        Initialize policy engine
+        Initialize policy engine with optional dependency injection.
+
+        All dependencies can be injected for testing or customization.
+        If not provided, default implementations are created.
 
         Args:
             config_path: Path to policy.yaml configuration file
+            config: PolicyConfig object (alternative to config_path)
             web3_provider: Web3 instance or wallet provider for simulation
-            chain_id: Chain ID for Sentio simulation (optional)
+            chain_id: Chain ID for Tenderly simulation (optional)
             event_callback: Optional callback function for validation events
+            logger: Custom logger implementing LoggerProtocol (default: PolicyLogger)
+            calldata_parser: Custom parser implementing CalldataParserProtocol
+            simulator: Custom basic simulator implementing SimulatorProtocol
+            tenderly_simulator: Custom Tenderly simulator (default: from env vars)
+            llm_judge: Custom LLM judge implementing LLMJudgeProtocol
+
+        Raises:
+            ValueError: If both config_path and config are provided
+            FileNotFoundError: If config_path doesn't exist
+            ConfigurationError: If configuration is invalid
+
+        Example:
+            >>> # Standard usage
+            >>> engine = PolicyEngine(config_path="policy.yaml", chain_id=8453)
+            >>>
+            >>> # With custom logger
+            >>> engine = PolicyEngine(
+            ...     config_path="policy.yaml",
+            ...     logger=my_custom_logger,
+            ... )
+            >>>
+            >>> # For testing with mocks
+            >>> engine = PolicyEngine(
+            ...     config=PolicyConfig({"enabled": True, "policies": []}),
+            ...     logger=mock_logger,
+            ...     tenderly_simulator=mock_tenderly,
+            ...     llm_judge=mock_llm,
+            ... )
         """
+        # Validate mutually exclusive parameters
+        if config_path and config:
+            raise ValueError("Cannot specify both config_path and config")
+
         # Initialize event emitter
         self.event_emitter = EventEmitter()
         if event_callback:
             self.event_emitter.add_callback(event_callback)
 
-        if config_path:
-            self.config = PolicyConfig.load(config_path)
+        # Load or use provided configuration
+        self.config = self._load_config(config_path, config)
+
+        # Store chain_id
+        self.chain_id = chain_id
+
+        # Initialize logger (injectable)
+        self.logger: LoggerProtocol = logger or self._create_default_logger()
+
+        # Initialize calldata parser (injectable)
+        self.parser: CalldataParserProtocol = calldata_parser or CalldataParser()
+
+        # Initialize basic simulator (injectable)
+        self.simulator: Optional[SimulatorProtocol] = simulator or TransactionSimulator(web3_provider)
+
+        # Initialize validators
+        self.validators = self._create_validators()
+
+        # Initialize Tenderly simulator (injectable or from env vars)
+        self.tenderly_simulator: Optional[SimulatorProtocol] = (
+            tenderly_simulator
+            if tenderly_simulator is not None
+            else self._create_default_tenderly()
+        )
+
+        # Initialize LLM validator (injectable or from config)
+        self.llm_validator: Optional[LLMJudgeProtocol] = (
+            llm_judge
+            if llm_judge is not None
+            else self._create_default_llm_judge()
+        )
+
+    def _load_config(
+        self,
+        config_path: Optional[str],
+        config: Optional[PolicyConfig],
+    ) -> PolicyConfig:
+        """
+        Load or create configuration.
+
+        Args:
+            config_path: Path to config file
+            config: PolicyConfig object
+
+        Returns:
+            PolicyConfig instance
+        """
+        if config:
+            return config
+        elif config_path:
+            return PolicyConfig.load(config_path)
         else:
-            # Default config
-            self.config = PolicyConfig({
+            # Default minimal configuration
+            return PolicyConfig({
                 "version": "2.0",
+                "enabled": True,
                 "policies": [
                     {"type": "eth_value_limit", "max_value_wei": "1000000000000000000", "enabled": True},
                     {"type": "gas_limit", "max_gas": 500000, "enabled": True}
@@ -237,63 +236,112 @@ class PolicyEngine:
                 "llm_validation": {"enabled": False}
             })
 
-        # Initialize components
+    def _create_default_logger(self) -> PolicyLogger:
+        """
+        Create default logger from configuration.
+
+        Returns:
+            PolicyLogger instance
+        """
         log_level_str = self.config.logging.get("level", "info")
-        self.logger = PolicyLogger(LogLevel(log_level_str))
-        self.parser = CalldataParser()
-        self.simulator = TransactionSimulator(web3_provider)
-        self.chain_id = chain_id
+        return PolicyLogger(LogLevel(log_level_str))
 
-        # Initialize validators
-        self.validators = self._create_validators()
+    def _create_default_tenderly(self) -> Optional[Any]:
+        """
+        Create Tenderly simulator from environment variables.
 
-        # Initialize Tenderly simulator (optional, via environment variables)
-        # Set TENDERLY_ACCESS_KEY, TENDERLY_ACCOUNT_SLUG, TENDERLY_PROJECT_SLUG to enable
-        self.tenderly_simulator = None
-        if TENDERLY_AVAILABLE:
-            import os
-            tenderly_key = os.getenv("TENDERLY_ACCESS_KEY")
-            tenderly_account = os.getenv("TENDERLY_ACCOUNT_SLUG")
-            tenderly_project = os.getenv("TENDERLY_PROJECT_SLUG")
+        Requires:
+            - TENDERLY_ACCESS_KEY
+            - TENDERLY_ACCOUNT_SLUG
+            - TENDERLY_PROJECT_SLUG
 
-            if tenderly_key and tenderly_account and tenderly_project:
-                self.tenderly_simulator = TenderlySimulator(
-                    access_key=tenderly_key,
-                    account_slug=tenderly_account,
-                    project_slug=tenderly_project,
-                    endpoint=os.getenv("TENDERLY_ENDPOINT", "https://api.tenderly.co/api/v1")
-                )
+        Optional:
+            - TENDERLY_ENDPOINT (default: https://api.tenderly.co/api/v1)
 
-        # Initialize LLM validation (optional)
-        self.llm_validator = None
-        if self.config.llm_validation.get("enabled", False) and LLM_JUDGE_AVAILABLE:
-            self.llm_validator = LLMJudge(
-                provider=self.config.llm_validation.get("provider", "openai"),
-                model=self.config.llm_validation.get("model", "gpt-4o-mini"),
-                api_key=self.config.llm_validation.get("api_key"),
-                block_threshold=self.config.llm_validation.get("block_threshold", 0.70),
-                warn_threshold=self.config.llm_validation.get("warn_threshold", 0.40)
-            )
+        Returns:
+            TenderlySimulator instance or None if not configured
+        """
+        if not TENDERLY_AVAILABLE:
+            return None
+
+        tenderly_key = os.getenv("TENDERLY_ACCESS_KEY")
+        tenderly_account = os.getenv("TENDERLY_ACCOUNT_SLUG")
+        tenderly_project = os.getenv("TENDERLY_PROJECT_SLUG")
+
+        if not all([tenderly_key, tenderly_account, tenderly_project]):
+            return None
+
+        return TenderlySimulator(
+            access_key=tenderly_key,
+            account_slug=tenderly_account,
+            project_slug=tenderly_project,
+            endpoint=os.getenv("TENDERLY_ENDPOINT", "https://api.tenderly.co/api/v1"),
+            logger=self.logger,
+        )
+
+    def _create_default_llm_judge(self) -> Optional[Any]:
+        """
+        Create LLM judge from configuration.
+
+        Only creates if llm_validation.enabled is True in config.
+
+        Returns:
+            LLMJudge instance or None if not enabled/available
+        """
+        if not LLM_JUDGE_AVAILABLE:
+            return None
+
+        if not self.config.llm_validation.get("enabled", False):
+            return None
+
+        return LLMJudge(
+            provider=self.config.llm_validation.get("provider", "openai"),
+            model=self.config.llm_validation.get("model", "gpt-4o-mini"),
+            api_key=self.config.llm_validation.get("api_key"),
+            block_threshold=self.config.llm_validation.get("block_threshold", 0.70),
+            warn_threshold=self.config.llm_validation.get("warn_threshold", 0.40),
+            logger=self.logger,
+        )
 
     def _create_validators(self) -> List[Any]:
-        """Create validator instances from config"""
-        validators = []
+        """
+        Create validator instances from configuration.
+
+        Each policy in the config is mapped to its corresponding
+        validator class. Unknown policy types are logged and skipped.
+
+        Returns:
+            List of PolicyValidator instances
+
+        Example:
+            Config with eth_value_limit and gas_limit policies will
+            create EthValueLimitValidator and (handled separately) GasLimitValidator.
+        """
+        validators: List[Any] = []
+
+        # Map policy types to validator classes
+        validator_map = {
+            "address_denylist": AddressDenylistValidator,
+            "address_allowlist": AddressAllowlistValidator,
+            "eth_value_limit": EthValueLimitValidator,
+            "token_amount_limit": TokenAmountLimitValidator,
+            "per_asset_limit": PerAssetLimitValidator,
+            "function_allowlist": FunctionAllowlistValidator,
+            # Note: gas_limit is handled separately in validate_transaction
+        }
 
         for policy_config in self.config.policies:
             policy_type = policy_config.get("type")
 
-            if policy_type == "address_denylist":
-                validators.append(AddressDenylistValidator(policy_config, self.logger))
-            elif policy_type == "address_allowlist":
-                validators.append(AddressAllowlistValidator(policy_config, self.logger))
-            elif policy_type == "eth_value_limit":
-                validators.append(EthValueLimitValidator(policy_config, self.logger))
-            elif policy_type == "token_amount_limit":
-                validators.append(TokenAmountLimitValidator(policy_config, self.logger))
-            elif policy_type == "per_asset_limit":
-                validators.append(PerAssetLimitValidator(policy_config, self.logger))
-            elif policy_type == "function_allowlist":
-                validators.append(FunctionAllowlistValidator(policy_config, self.logger))
+            if policy_type in validator_map:
+                validator_class = validator_map[policy_type]
+                validators.append(validator_class(policy_config, self.logger))
+            elif policy_type == "gas_limit":
+                # Gas limit is handled separately - skip here
+                pass
+            else:
+                # Unknown policy type - log warning
+                self.logger.warning(f"Unknown policy type: {policy_type}")
 
         return validators
 
@@ -757,21 +805,68 @@ class PolicyEngine:
     def _check_honeypot_token(
         self,
         transaction: Dict[str, Any],
-        parsed_tx: Any,
+        parsed_tx: ParsedTransaction,
         simulation_result: Any,
         from_address: str
     ) -> tuple[bool, Optional[str]]:
         """
-        Honeypot detection: Simulate buy, then simulate sell. If sell fails → HONEYPOT → Block buy.
+        Detect honeypot tokens by simulating a sell after a buy.
+
+        Honeypot tokens are malicious tokens that can be bought but not sold.
+        This function detects them by simulating a sell transaction after
+        detecting a token purchase.
+
+        Detection Algorithm:
+        ====================
+
+        1. DETECT TOKEN PURCHASE
+           - Analyze simulation result's asset_changes for ERC20 tokens
+           - Check Transfer events where user is recipient (positive delta)
+           - If no tokens received, skip honeypot check (not a token purchase)
+
+        2. SKIP KNOWN SAFE TOKENS
+           - WETH on major chains (Base, Ethereum, Arbitrum, Optimism)
+           - Major stablecoins (USDC, USDT, DAI)
+           - These are whitelisted to avoid false positives
+
+        3. SIMULATE SELL FOR EACH TOKEN RECEIVED
+           - Construct transfer() call to burn address (0x...0001)
+           - Simulate via Tenderly with same network_id
+           - Check sell simulation result for honeypot indicators
+
+        4. HONEYPOT INDICATORS (any one = honeypot)
+           a) Sell simulation reverts → Cannot sell
+           b) No Transfer events in sell → Fake transfer function
+           c) User balance unchanged → Transfer does nothing
+
+        5. VERDICT
+           - If ANY token fails sell test → Block as honeypot
+           - If ALL tokens pass → Allow transaction
 
         Args:
-            transaction: The original transaction (potential BUY)
-            parsed_tx: Parsed transaction details
-            simulation_result: Tenderly simulation result of the BUY
-            from_address: User's address
+            transaction: Original buy transaction dictionary
+            parsed_tx: ParsedTransaction with decoded function details
+            simulation_result: TenderlySimulationResult from buy simulation
+            from_address: User's wallet address (checksummed or lowercase)
 
         Returns:
-            (is_honeypot, reason) tuple
+            Tuple of (is_honeypot: bool, reason: Optional[str])
+            - (False, None) if not a honeypot or not a token purchase
+            - (True, "HONEYPOT DETECTED: ...") if honeypot indicators found
+
+        Example:
+            >>> is_honeypot, reason = engine._check_honeypot_token(
+            ...     transaction=buy_tx,
+            ...     parsed_tx=parsed,
+            ...     simulation_result=tenderly_result,
+            ...     from_address="0x123..."
+            ... )
+            >>> if is_honeypot:
+            ...     raise PolicyViolationError(reason)
+
+        Note:
+            This function requires Tenderly simulator to be available.
+            Returns (False, None) if Tenderly is not configured.
         """
         if not simulation_result or not simulation_result.has_data():
             return False, None
