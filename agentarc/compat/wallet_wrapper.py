@@ -2,11 +2,12 @@
 Policy Wallet Provider - Wraps AgentKit wallet providers with policy enforcement
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, List, Optional
 from decimal import Decimal
 from web3 import Web3
 
-from .logger import PolicyLogger, LogLevel
+from ..log import PolicyLogger, LogLevel
+from ..events import ValidationEvent, ValidationEventCollector
 
 # Try to import WalletProvider from AgentKit
 # If not available, create a minimal base class for compatibility
@@ -33,9 +34,17 @@ class PolicyWalletProvider(WalletProvider):
 
     This wrapper intercepts send_transaction() calls and validates them
     against configured policies before execution.
+
+    Supports event streaming for frontend integration via event callbacks.
     """
 
-    def __init__(self, base_provider: Any, policy_engine: Any, logger: Optional[PolicyLogger] = None):
+    def __init__(
+        self,
+        base_provider: Any,
+        policy_engine: Any,
+        logger: Optional[PolicyLogger] = None,
+        event_callback: Optional[Callable[[ValidationEvent], None]] = None
+    ):
         """
         Initialize the policy wallet provider
 
@@ -43,10 +52,41 @@ class PolicyWalletProvider(WalletProvider):
             base_provider: The underlying AgentKit wallet provider
             policy_engine: PolicyEngine instance for validation
             logger: Optional PolicyLogger instance (creates default if not provided)
+            event_callback: Optional callback function for validation events
         """
         self._base_provider = base_provider
         self._policy_engine = policy_engine
         self.logger = logger or PolicyLogger()
+
+        # Event collection for the last validation
+        self._event_collector = ValidationEventCollector()
+        self._policy_engine.event_emitter.add_callback(self._event_collector.collect)
+
+        # Add user's callback if provided
+        if event_callback:
+            self._policy_engine.event_emitter.add_callback(event_callback)
+
+    def get_last_validation_events(self) -> List[Dict[str, Any]]:
+        """
+        Get the events from the last transaction validation.
+
+        Returns:
+            List of validation events as dictionaries (JSON-serializable)
+        """
+        return self._event_collector.to_list()
+
+    def clear_validation_events(self) -> None:
+        """Clear the collected validation events"""
+        self._event_collector.clear()
+
+    def add_event_callback(self, callback: Callable[[ValidationEvent], None]) -> None:
+        """
+        Add a callback to receive validation events in real-time.
+
+        Args:
+            callback: Function that receives ValidationEvent objects
+        """
+        self._policy_engine.event_emitter.add_callback(callback)
 
     def send_transaction(self, transaction: Dict[str, Any]) -> str:
         """
@@ -63,6 +103,9 @@ class PolicyWalletProvider(WalletProvider):
         Raises:
             PolicyViolationError: If transaction violates any policy
         """
+        # Clear previous validation events
+        self._event_collector.clear()
+
         # Get sender address for simulation
         from_address = self._base_provider.get_address()
 

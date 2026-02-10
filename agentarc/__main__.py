@@ -9,7 +9,7 @@ Usage:
 import click
 import shutil
 from pathlib import Path
-from .policy_engine import PolicyConfig
+from .core.config import PolicyConfig
 
 
 @click.group()
