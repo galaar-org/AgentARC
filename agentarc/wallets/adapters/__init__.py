@@ -5,10 +5,17 @@ Each adapter implements the WalletAdapter interface for a specific
 wallet type (private key, mnemonic, CDP, etc.).
 """
 
-from .private_key import PrivateKeyWallet
-from .mnemonic import MnemonicWallet
+# Optional adapters (phase 2 - may not be available yet)
+try:
+    from .private_key import PrivateKeyWallet
+except ImportError:
+    PrivateKeyWallet = None  # type: ignore
 
-# Optional adapters (may have additional dependencies)
+try:
+    from .mnemonic import MnemonicWallet
+except ImportError:
+    MnemonicWallet = None  # type: ignore
+
 try:
     from .cdp import CdpWalletAdapter
 except ImportError:

@@ -22,10 +22,19 @@ Example:
 """
 
 from .base import WalletAdapter
-from .factory import WalletFactory
-from .policy_wallet import PolicyWallet
 
-# Wallet adapters
+# Optional modules (phase 2 - may not be available yet)
+try:
+    from .factory import WalletFactory
+except ImportError:
+    WalletFactory = None  # type: ignore
+
+try:
+    from .policy_wallet import PolicyWallet
+except ImportError:
+    PolicyWallet = None  # type: ignore
+
+# Wallet adapters (optional)
 from .adapters import (
     PrivateKeyWallet,
     MnemonicWallet,

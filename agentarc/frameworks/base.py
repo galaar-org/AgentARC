@@ -6,9 +6,10 @@ to provide a consistent way to create tools for AI agents.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
-from ..wallets.policy_wallet import PolicyWallet
+if TYPE_CHECKING:
+    from ..wallets.policy_wallet import PolicyWallet
 
 
 class FrameworkAdapter(ABC):
@@ -31,7 +32,7 @@ class FrameworkAdapter(ABC):
     """
 
     @abstractmethod
-    def create_transaction_tool(self, policy_wallet: PolicyWallet) -> Any:
+    def create_transaction_tool(self, policy_wallet: "PolicyWallet") -> Any:
         """
         Create a transaction sending tool.
 
@@ -44,7 +45,7 @@ class FrameworkAdapter(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def create_balance_tool(self, policy_wallet: PolicyWallet) -> Any:
+    def create_balance_tool(self, policy_wallet: "PolicyWallet") -> Any:
         """
         Create a balance checking tool.
 
@@ -56,7 +57,7 @@ class FrameworkAdapter(ABC):
         """
         raise NotImplementedError
 
-    def create_all_tools(self, policy_wallet: PolicyWallet) -> list:
+    def create_all_tools(self, policy_wallet: "PolicyWallet") -> list:
         """
         Create all available tools.
 

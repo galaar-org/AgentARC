@@ -114,22 +114,35 @@ from .validators import (
     FunctionAllowlistValidator,
 )
 
-# Wallets module - Universal wallet support
-from .wallets import (
-    WalletAdapter,
-    WalletFactory,
-    PolicyWallet,
-    PrivateKeyWallet,
-    MnemonicWallet,
-    CdpWalletAdapter,
-)
+# Wallets module - Universal wallet support (phase 2 - optional)
+try:
+    from .wallets import (
+        WalletAdapter,
+        WalletFactory,
+        PolicyWallet,
+        PrivateKeyWallet,
+        MnemonicWallet,
+        CdpWalletAdapter,
+    )
+except ImportError:
+    WalletAdapter = None  # type: ignore
+    WalletFactory = None  # type: ignore
+    PolicyWallet = None  # type: ignore
+    PrivateKeyWallet = None  # type: ignore
+    MnemonicWallet = None  # type: ignore
+    CdpWalletAdapter = None  # type: ignore
 
-# Frameworks module - Multi-framework adapters
-from .frameworks import (
-    FrameworkAdapter,
-    LangChainAdapter,
-    AgentKitAdapter,
-)
+# Frameworks module - Multi-framework adapters (phase 2 - optional)
+try:
+    from .frameworks import (
+        FrameworkAdapter,
+        LangChainAdapter,
+        AgentKitAdapter,
+    )
+except ImportError:
+    FrameworkAdapter = None  # type: ignore
+    LangChainAdapter = None  # type: ignore
+    AgentKitAdapter = None  # type: ignore
 
 __version__ = "0.2.0"
 __all__ = [
