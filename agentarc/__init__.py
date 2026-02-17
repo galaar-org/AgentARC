@@ -10,7 +10,7 @@ A comprehensive security and policy enforcement layer for AI agents:
 - Event streaming for frontend integration
 - Dependency injection for testability
 - Universal wallet support (private key, mnemonic, CDP, EIP-1193)
-- Multi-framework support (LangChain, CrewAI, AutoGen, AgentKit)
+- Multi-framework support (LangChain, OpenAI SDK, CrewAI, AutoGen, AgentKit)
 
 Compatible with Coinbase AgentKit and other blockchain agent frameworks.
 
@@ -137,11 +137,13 @@ try:
     from .frameworks import (
         FrameworkAdapter,
         LangChainAdapter,
+        OpenAIAdapter,
         AgentKitAdapter,
     )
 except ImportError:
     FrameworkAdapter = None  # type: ignore
     LangChainAdapter = None  # type: ignore
+    OpenAIAdapter = None  # type: ignore
     AgentKitAdapter = None  # type: ignore
 
 __version__ = "0.2.0"
@@ -222,5 +224,6 @@ __all__ = [
     # Frameworks module
     "FrameworkAdapter",
     "LangChainAdapter",
+    "OpenAIAdapter",
     "AgentKitAdapter",
 ]
