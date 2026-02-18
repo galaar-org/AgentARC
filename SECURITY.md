@@ -19,7 +19,7 @@ to responsibly disclose your findings.
 
 Instead, please report security issues by emailing:
 
-**security@agentarc.dev**
+**me@dipeshsukhani.dev**
 
 Include the following information in your report:
 
