@@ -1,6 +1,6 @@
 # AgentARC - Security Layer for AI Blockchain Agents
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/galaar-org/AgentARC)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/galaar-org/AgentARC)
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![GitHub](https://img.shields.io/badge/github-galaar-org)](https://github.com/galaar-org)
