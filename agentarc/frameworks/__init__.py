@@ -6,19 +6,26 @@ various AI agent frameworks.
 
 Supported Frameworks:
     - LangChain: Create LangChain tools for transactions
+    - OpenAI SDK: Create OpenAI function calling tools
     - CrewAI: Create CrewAI tools for agents
     - AutoGen: Create AutoGen functions
     - AgentKit: Backward compatible with Coinbase AgentKit
 
 Example:
-    >>> from agentarc.frameworks import LangChainAdapter
+    >>> from agentarc.frameworks import LangChainAdapter, OpenAIAdapter
     >>> from agentarc.wallets import WalletFactory, PolicyWallet
     >>>
     >>> wallet = WalletFactory.from_private_key("0x...", rpc_url="...")
     >>> policy_wallet = PolicyWallet(wallet, config_path="policy.yaml")
     >>>
+    >>> # LangChain
     >>> adapter = LangChainAdapter()
-    >>> tx_tool = adapter.create_transaction_tool(policy_wallet)
+    >>> tools = adapter.create_all_tools(policy_wallet)
+    >>>
+    >>> # OpenAI SDK
+    >>> adapter = OpenAIAdapter()
+    >>> tools = adapter.create_all_tools(policy_wallet)
+    >>> handlers = adapter.create_tool_handlers(policy_wallet)
 """
 
 from .base import FrameworkAdapter
@@ -30,6 +37,11 @@ except ImportError:
     LangChainAdapter = None  # type: ignore
 
 try:
+    from .openai_sdk import OpenAIAdapter
+except ImportError:
+    OpenAIAdapter = None  # type: ignore
+
+try:
     from .agentkit import AgentKitAdapter
 except ImportError:
     AgentKitAdapter = None  # type: ignore
@@ -37,5 +49,6 @@ except ImportError:
 __all__ = [
     "FrameworkAdapter",
     "LangChainAdapter",
+    "OpenAIAdapter",
     "AgentKitAdapter",
 ]
