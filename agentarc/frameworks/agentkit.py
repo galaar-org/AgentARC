@@ -62,8 +62,8 @@ class AgentKitAdapter(FrameworkAdapter):
             PolicyWalletProvider instance (backward compatible)
         """
         # Import the legacy wrapper for backward compatibility
-        from ..wallet_wrapper import PolicyWalletProvider
-        from ..policy_engine import PolicyEngine
+        from ..compat import PolicyWalletProvider
+        from ..engine import PolicyEngine
 
         # Create policy engine
         engine = PolicyEngine(
