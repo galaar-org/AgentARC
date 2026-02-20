@@ -2,46 +2,202 @@
 
 Thank you for your interest in contributing to AgentARC! This document provides guidelines for contributing to the project.
 
-## Development Setup
+## Table of Contents
+
+- [Code of Conduct](#code-of-conduct)
+- [Getting Started](#getting-started)
+- [Development Setup](#development-setup)
+- [Project Structure](#project-structure)
+- [Making Contributions](#making-contributions)
+- [Code Style](#code-style)
+- [Testing](#testing)
+- [Documentation](#documentation)
+- [Submitting Changes](#submitting-changes)
+
+## Code of Conduct
+
+This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to me@dipeshsukhani.dev.
+
+## Getting Started
 
 ### Prerequisites
 
 - Python 3.10 or higher
 - pip or poetry
 
-### Installation for Development
+### Quick Start
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/agentarc.git
-cd agentarc
+# Fork and clone the repository
+git clone https://github.com/galaar-org/AgentARC.git
+cd AgentARC
 
 # Install in editable mode with development dependencies
 pip install -e ".[dev]"
 
-# Or with poetry
+# Run tests to verify setup
+pytest tests/
+```
+
+## Development Setup
+
+### Installation Options
+
+```bash
+# Using pip
+pip install -e ".[dev]"
+
+# Using poetry
 poetry install --with dev
+```
+
+### Environment Setup
+
+```bash
+# Copy example environment
+cp .env.example .env
+
+# Edit with your configuration
+# - RPC_URL: Your Ethereum RPC endpoint
+# - TENDERLY_* : Optional Tenderly API keys
+# - OPENAI_API_KEY: Optional for LLM features
 ```
 
 ## Project Structure
 
+AgentARC uses a modular architecture:
+
 ```
 agentarc/
-├── agentarc/           # Main package source code
-│   ├── __init__.py        # Package exports
-│   ├── __main__.py        # CLI entry point
-│   ├── policy_engine.py   # Core validation engine
-│   ├── wallet_wrapper.py  # Wallet provider wrapper
-│   ├── calldata_parser.py # Transaction parsing
-│   ├── simulator.py       # Transaction simulation
-│   ├── logger.py          # Logging system
-│   └── rules/             # Policy validators
-│       ├── __init__.py
-│       └── validators.py  # All policy validators
-├── tests/                 # Test suite
-├── examples/              # Usage examples
-├── docs/                  # Documentation
-└── pyproject.toml         # Package configuration
+├── __init__.py           # Package exports (v0.2.0)
+├── __main__.py           # CLI entry point
+│
+├── core/                 # Core types, interfaces, errors
+│   ├── config.py         # PolicyConfig
+│   ├── errors.py         # Exception classes
+│   ├── interfaces.py     # Protocol definitions
+│   └── types.py          # Type definitions
+│
+├── engine/               # Validation pipeline
+│   ├── legacy.py         # Full PolicyEngine
+│   ├── pipeline.py       # ValidationPipeline
+│   ├── context.py        # ValidationContext
+│   ├── factory.py        # ComponentFactory
+│   └── stages/           # Pipeline stages
+│       ├── intent.py
+│       ├── policy.py
+│       ├── simulation.py
+│       ├── honeypot.py
+│       └── llm.py
+│
+├── validators/           # Policy validators
+│   ├── base.py           # PolicyValidator ABC
+│   ├── registry.py       # ValidatorRegistry
+│   └── builtin/          # Built-in validators
+│       ├── address.py
+│       ├── limits.py
+│       ├── gas.py
+│       └── functions.py
+│
+├── wallets/              # Universal wallet support
+│   ├── base.py           # WalletAdapter ABC
+│   ├── factory.py        # WalletFactory
+│   ├── policy_wallet.py  # PolicyWallet
+│   └── adapters/         # Wallet implementations
+│       ├── private_key.py
+│       ├── mnemonic.py
+│       └── cdp.py
+│
+├── frameworks/           # AI framework adapters
+│   ├── base.py           # FrameworkAdapter ABC
+│   ├── langchain.py
+│   └── agentkit.py
+│
+├── analysis/             # Security analysis
+│   └── llm_judge.py
+│
+├── simulators/           # Transaction simulation
+│   ├── basic.py
+│   └── tenderly.py
+│
+├── parsers/              # Transaction parsing
+│   └── calldata.py
+│
+├── events/               # Event streaming
+│   └── events.py
+│
+├── log/                  # Logging
+│   └── logger.py
+│
+└── compat/               # Backward compatibility
+    └── wallet_wrapper.py
+```
+
+## Making Contributions
+
+### Types of Contributions
+
+We welcome:
+
+- **Bug Fixes**: Fix issues and improve stability
+- **New Features**: Add new validators, wallet adapters, or framework integrations
+- **Documentation**: Improve docs, examples, and tutorials
+- **Tests**: Increase test coverage
+- **Performance**: Optimize existing code
+
+
+## Code Style
+
+### Python Style Guide
+
+- Follow [PEP 8](https://pep8.org/)
+- Use type hints for all public APIs
+- Maximum line length: 100 characters
+- Use meaningful variable names
+
+### Formatting
+
+```bash
+# Format code
+black agentarc/ tests/
+
+# Sort imports
+isort agentarc/ tests/
+
+# Lint
+flake8 agentarc/ tests/
+mypy agentarc/
+```
+
+### Docstrings
+
+Use Google-style docstrings:
+
+```python
+def validate_transaction(
+    self,
+    tx: Dict[str, Any],
+    from_address: str
+) -> Tuple[bool, str]:
+    """
+    Validate transaction against configured policies.
+
+    Args:
+        tx: Transaction dictionary with to, value, data fields
+        from_address: Sender address for simulation
+
+    Returns:
+        Tuple of (passed, reason) where passed is True if
+        transaction is allowed
+
+    Raises:
+        PolicyViolationError: If transaction violates policy
+        SimulationError: If simulation fails
+
+    Example:
+        >>> engine = PolicyEngine(config_path="policy.yaml")
+        >>> passed, reason = engine.validate_transaction(tx, addr)
+    """
 ```
 
 ## Testing
@@ -50,160 +206,106 @@ agentarc/
 
 ```bash
 # Run all tests
-cd tests
-python test_complete_system.py
+pytest tests/
+
+# Run with coverage
+pytest tests/ --cov=agentarc --cov-report=html
+
+# Run specific test file
+pytest tests/test_validators.py
 
 # Run specific test
-python test_fix.py
+pytest tests/test_validators.py::test_address_denylist
 ```
 
-### Writing Tests
+### Test Coverage
 
-When adding new features, please include tests:
+We aim for >80% test coverage. New features should include tests for:
 
-1. Create test file in `tests/`
-2. Test all success and failure cases
-3. Verify logging output
-4. Check edge cases
+- Success cases
+- Failure cases
+- Edge cases
+- Error handling
 
-## Code Style
+## Documentation
 
-- Follow PEP 8 style guidelines
-- Use type hints where applicable
-- Write docstrings for all public functions and classes
-- Keep functions focused and single-purpose
+### Updating Documentation
 
-### Example
+1. Update docstrings in code
+2. Update README.md for user-facing changes
+3. Update CHANGELOG.md
+4. Add examples to `examples/` directory
 
-```python
-def validate_transaction(self, tx: Dict[str, Any], from_address: str) -> tuple[bool, str]:
-    """
-    Validate transaction against all configured policies.
+### CHANGELOG Format
 
-    Args:
-        tx: Transaction dictionary with to, value, data, etc.
-        from_address: Sender address for simulation
+Follow [Keep a Changelog](https://keepachangelog.com/):
 
-    Returns:
-        Tuple of (passed: bool, reason: str)
-    """
-    # Implementation
-    pass
-```
+```markdown
+## [0.2.1] - 2024-01-15
 
-## Adding New Policy Types
+### Added
+- New `MyValidator` for custom validation
 
-To add a new policy validator:
+### Changed
+- Improved error messages in PolicyEngine
 
-1. Create validator class in `agentarc/rules/validators.py`
-2. Inherit from `PolicyValidator` base class
-3. Implement `validate()` method
-4. Register in `PolicyEngine._create_validators()`
-5. Add configuration example to default policy.yaml
-6. Write tests
-7. Update documentation
-
-### Example
-
-```python
-class MyCustomValidator(PolicyValidator):
-    """Description of what this validator does"""
-
-    def validate(self, parsed_tx: ParsedTransaction) -> ValidationResult:
-        if not self.enabled:
-            return ValidationResult(passed=True)
-
-        # Your validation logic here
-        if some_condition:
-            return ValidationResult(
-                passed=False,
-                reason="Description of why it failed",
-                rule_name="my_custom_rule"
-            )
-
-        return ValidationResult(passed=True)
+### Fixed
+- Fixed bug in address validation (#123)
 ```
 
 ## Submitting Changes
 
+### Branch Naming
+
+- `feature/description` - New features
+- `fix/description` - Bug fixes
+- `docs/description` - Documentation
+- `refactor/description` - Code refactoring
+
+### Commit Messages
+
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+feat: add new validator for gas limits
+fix: correct address validation logic
+docs: update contributing guidelines
+refactor: simplify pipeline stages
+test: add tests for wallet factory
+```
+
 ### Pull Request Process
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+2. Create a feature branch from `main`
 3. Make your changes
-4. Add tests for new functionality
+4. Run tests and linting
 5. Update documentation
-6. Run tests to ensure they pass
-7. Commit your changes (`git commit -m 'Add amazing feature'`)
-8. Push to the branch (`git push origin feature/amazing-feature`)
-9. Open a Pull Request
+6. Push to your fork
+7. Open a Pull Request
 
-### Pull Request Guidelines
+### PR Checklist
 
-- Provide a clear description of the changes
-- Reference any related issues
-- Include test coverage for new features
-- Update CHANGELOG.md
-- Ensure all tests pass
-- Follow existing code style
+- [ ] Tests pass locally
+- [ ] Code follows style guidelines
+- [ ] Documentation updated
+- [ ] CHANGELOG.md updated
+- [ ] No breaking changes (or clearly documented)
 
-## Documentation
+## Getting Help
 
-When adding new features:
+- **Questions**: Open a [Discussion](https://github.com/anthropics/agentarc/discussions)
+- **Bugs**: Open an [Issue](https://github.com/anthropics/agentarc/issues)
+- **Security**: Email me@dipeshsukhani.dev
 
-1. Update README.md if needed
-2. Add examples to `examples/`
-3. Update CHANGELOG.md
-4. Add inline code documentation
-5. Update configuration examples
+## Recognition
 
-## Reporting Issues
+Contributors are recognized in:
 
-### Bug Reports
-
-Include:
-- Clear description of the issue
-- Steps to reproduce
-- Expected behavior
-- Actual behavior
-- AgentARC version
-- Python version
-- Error messages/logs
-
-### Feature Requests
-
-Include:
-- Clear description of the feature
-- Use case / motivation
-- Proposed implementation (if any)
-- Examples
-
-## Code of Conduct
-
-### Our Standards
-
-- Be respectful and inclusive
-- Focus on constructive feedback
-- Accept differing viewpoints
-- Prioritize community benefit
-
-### Unacceptable Behavior
-
-- Harassment or discriminatory language
-- Personal attacks
-- Trolling or insulting comments
-- Publishing private information
-
-## Questions?
-
-- Open an issue for questions
-- Check existing documentation
-- Review examples in `examples/`
-
-## License
-
-By contributing, you agree that your contributions will be licensed under the MIT License.
+- Release notes
+- README.md contributors section
+- GitHub contributors page
 
 ---
 
-Thank you for contributing to AgentARC! 🎉
+Thank you for contributing to AgentARC!

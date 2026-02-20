@@ -1,3 +1,22 @@
+"""
+AgentKit Configuration with AgentARC PolicyLayer Integration
+
+This file demonstrates how to integrate AgentARC PolicyLayer with AgentKit to add:
+- Transaction validation against user-defined policies
+- Transaction simulation before execution
+- Calldata integrity verification
+- Event streaming for frontend integration
+
+The PolicyLayer wraps the wallet provider and intercepts all transactions
+before they are sent to the blockchain.
+
+Phase 1 Architecture Features (NEW):
+- Dependency injection for testability
+- Type-safe configuration with PolicyConfig
+- Protocol-based interfaces for extensibility
+- Custom error handling with typed exceptions
+"""
+
 from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
@@ -15,25 +34,21 @@ from coinbase_agentkit import (
     weth_action_provider,
 )
 
-# Import PolicyLayer components
-from agentarc import PolicyWalletProvider, PolicyEngine
+# Import AgentARC PolicyLayer components
+from agentarc import (
+    # Main components
+    PolicyWalletProvider,
+    PolicyEngine,
+    PolicyConfig,
+    PolicyLogger,
+    LogLevel,
+    # Errors - for proper exception handling
+    ConfigurationError,
+)
 
 # Import custom test actions
 from approval_test_actions import approval_test_action_provider
 from honeypot_test_actions import honeypot_test_action_provider
-
-
-"""
-AgentKit Configuration with PolicyLayer Integration
-
-This file demonstrates how to integrate PolicyLayer with AgentKit to add:
-- Transaction validation against user-defined policies
-- Transaction simulation before execution
-- Calldata integrity verification
-
-The PolicyLayer wraps the wallet provider and intercepts all transactions
-before they are sent to the blockchain.
-"""
 
 # Configure a file to persist wallet data
 wallet_data_file = "wallet_data.txt"
@@ -65,16 +80,48 @@ AGENT_INSTRUCTIONS = (
     "responses. Refrain from restating your tools' descriptions unless it is explicitly requested."
 )
 
-def initialize_agent(config, use_policy_layer=True, policy_config_path="policy.yaml"):
+def initialize_agent(
+    config,
+    use_policy_layer=True,
+    policy_config_path="policy.yaml",
+    event_callback=None,
+    log_level=LogLevel.INFO,
+):
     """Initialize the agent with the provided configuration.
+
+    This function demonstrates Phase 1 architecture improvements:
+    - Dependency injection for custom logger
+    - Event callbacks for frontend integration
+    - Type-safe PolicyConfig usage
+    - Proper error handling with typed exceptions
 
     Args:
         config: Configuration object for the wallet provider
         use_policy_layer: Whether to enable policy layer (default: True)
         policy_config_path: Path to policy.yaml configuration file
+        event_callback: Optional callback for validation events (Phase 1 feature)
+        log_level: Logging level (default: LogLevel.INFO)
 
     Returns:
-        tuple[Agent, dict]: The initialized agent and its configuration
+        tuple[Agent, WalletProvider]: The initialized agent and wallet provider
+
+    Raises:
+        ConfigurationError: If policy configuration is invalid
+        PolicyViolationError: If a transaction violates policies (during use)
+
+    Example:
+        # Basic usage (backward compatible)
+        agent, wallet = initialize_agent(config)
+
+        # With event streaming (Phase 1)
+        def on_validation_event(event: ValidationEvent):
+            print(f"Stage: {event.stage}, Status: {event.status}")
+
+        agent, wallet = initialize_agent(
+            config,
+            event_callback=on_validation_event,
+            log_level=LogLevel.DEBUG
+        )
     """
     # Initialize CDP EVM Wallet Provider
     base_wallet_provider = CdpEvmWalletProvider(
@@ -91,30 +138,51 @@ def initialize_agent(config, use_policy_layer=True, policy_config_path="policy.y
     # Wrap wallet provider with PolicyLayer if enabled
     if use_policy_layer:
         print("\n" + "="*70)
-        print("🛡️  POLICYLAYER ENABLED")
+        print("🛡️  AGENTARC POLICYLAYER ENABLED")
         print("="*70)
         print(f"Loading policy configuration from: {policy_config_path}")
 
-        # Create policy engine with web3 provider for simulation
+        # Phase 1: Create custom logger with configurable level
+        custom_logger = PolicyLogger(level=log_level)
+
+        # Phase 1: Load and validate configuration using PolicyConfig
+        # This provides type-safe access to configuration values
+        try:
+            policy_config = PolicyConfig.load(policy_config_path)
+            print(f"✓ Policy config loaded: {len(policy_config.policies)} policies defined")
+        except FileNotFoundError:
+            raise ConfigurationError(f"Policy file not found: {policy_config_path}")
+        except Exception as e:
+            raise ConfigurationError(f"Invalid policy configuration: {e}")
+
+        # Create policy engine with dependency injection (Phase 1)
+        #
+        # New Phase 1 features:
+        # - logger: Injectable logger for custom logging behavior
+        # - event_callback: Stream validation events to frontend
+        # - config: Type-safe PolicyConfig object
         #
         # To enable intelligent features in policy.yaml:
-        # 1. Set sentio.enabled: true and add SENTIO_API_KEY to .env
-        # 2. Set llm_judge.enabled: true and add OPENAI_API_KEY/ANTHROPIC_API_KEY to .env
+        # 1. Set llm_validation.enabled: true and add OPENAI_API_KEY to .env
         #
         # These features provide:
-        # - Advanced simulation with call traces and fund flow (Sentio)
+        # - Advanced simulation with call traces
         # - LLM-based malicious activity detection (hidden approvals, reentrancy, etc.)
         policy_engine = PolicyEngine(
-            config_path=policy_config_path,
-            web3_provider=base_wallet_provider,  # Pass wallet for simulation
-            chain_id=84532  # Set appropriate chain_id for Sentio (1=mainnet, 8453=base, etc.)
+            config=policy_config,  # Phase 1: Use PolicyConfig object directly
+            web3_provider=base_wallet_provider,
+            chain_id=84532,  # Base Sepolia
+            event_callback=event_callback,  # Phase 1: Event streaming
+            logger=custom_logger,  # Phase 1: Dependency injection
         )
 
         # Wrap the base wallet provider
         wallet_provider = PolicyWalletProvider(base_wallet_provider, policy_engine)
 
-        print("✓ PolicyLayer initialized successfully")
+        print("✓ AgentARC PolicyLayer initialized successfully")
         print("  All transactions will be validated against configured policies")
+        if event_callback:
+            print("  Event streaming enabled for frontend integration")
         print("="*70 + "\n")
     else:
         wallet_provider = base_wallet_provider
@@ -151,7 +219,7 @@ def initialize_agent(config, use_policy_layer=True, policy_config_path="policy.y
             llm,
             tools=tools,
             checkpointer=memory,
-            state_modifier=AGENT_INSTRUCTIONS,
+            prompt=AGENT_INSTRUCTIONS,
         ),
         wallet_provider
     )

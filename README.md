@@ -1,6 +1,6 @@
 # AgentARC - Security Layer for AI Blockchain Agents
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/galaar-org/AgentARC)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/galaar-org/AgentARC)
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![GitHub](https://img.shields.io/badge/github-galaar-org)](https://github.com/galaar-org)
@@ -32,8 +32,12 @@ These are representative examples, not an exhaustive list. AgentARC is designed 
 - ✅ **Transaction Simulation**: Tenderly integration for detailed execution traces
 - ✅ **Threat Detection (Includes Honeypots)**: Automated checks for token traps and other suspicious patterns
 - ✅ **Optional LLM-based Security**: AI-powered malicious activity detection and risk scoring
-- ✅ **Zero Agent Modifications**: Pure wrapper pattern for AgentKit
+- ✅ **Zero Agent Modifications**: Pure wrapper pattern for seamless integration
 - ✅ **Asset Change Tracking**: Monitor balance changes before execution
+- ✅ **Multi-Framework Support**: LangChain, OpenAI SDK and AgentKit
+- ✅ **Universal Wallet Support**: Private key, mnemonic and CDP
+- ✅ **Event Streaming**: Real-time validation events for frontend integration
+- ✅ **Plugin Architecture**: Extensible validators, simulators, and parsers
 
 ---
 
@@ -64,7 +68,27 @@ agentarc setup
 vim policy.yaml
 ```
 
-### Integration (3 Lines of Code)
+### Integration
+
+#### New API (v0.2.0+) - Universal Wallet
+
+```python
+from agentarc import WalletFactory, PolicyWallet
+
+# Create wallet from private key, mnemonic, or CDP
+wallet = WalletFactory.from_private_key(
+    private_key="0x...",
+    rpc_url="https://sepolia.base.org"
+)
+
+# Wrap with policy enforcement
+policy_wallet = PolicyWallet(wallet, config_path="policy.yaml")
+
+# All transactions now go through multi-stage validation
+result = policy_wallet.send_transaction({"to": "0x...", "value": 1000})
+```
+
+#### AgentKit Integration (Legacy API)
 
 ```python
 from agentarc import PolicyWalletProvider, PolicyEngine
@@ -85,36 +109,22 @@ policy_wallet = PolicyWalletProvider(base_wallet, policy_engine)
 agentkit = AgentKit(wallet_provider=policy_wallet, action_providers=[...])
 ```
 
-That's it! All transactions now go through multi-stage security validation.
+All transactions now go through multi-stage security validation.
 
 ---
 
 ## 📚 Examples
 
-### 1. Basic Usage (`examples/basic_usage.py`)
+### 1. Basic Chat Agent (`examples/basic-chat-agent/`)
 
-Simple demonstration with mock wallet provider.
-
-```bash
-cd examples
-python basic_usage.py
-```
-
-**Features:**
-- Mock wallet implementation
-- Policy validation examples
-- Error handling demonstration
-
-### 2. OnChain Agent (`examples/onchain-agent/`)
-
-Production-ready Coinbase AgentKit chatbot with AgentARC.
+Production-ready Coinbase AgentKit chatbot with AgentARC and a Next.js frontend.
 
 ```bash
-cd examples/onchain-agent
+cd examples/basic-chat-agent
 cp .env.example .env
 # Edit .env with your API keys
 
-pip install -r requirements.txt
+poetry install
 python chatbot.py
 ```
 
@@ -122,10 +132,12 @@ python chatbot.py
 - ✅ Real CDP wallet integration
 - ✅ Interactive chatbot interface
 - ✅ Complete policy configuration
+- ✅ Next.js frontend with real-time validation events
+- ✅ LangGraph server integration
 
-**See:** [OnChain Agent README](examples/onchain-agent/README.md)
+**See:** [Basic Chat Agent Docs](examples/basic-chat-agent/docs/)
 
-### 3. Autonomous Portfolio Agent (`examples/autonomous-portfolio-agent/`)
+### 2. Autonomous Portfolio Agent (`examples/autonomous-portfolio-agent/`)
 
 AI agent that autonomously manages a crypto portfolio with honeypot protection.
 
@@ -532,25 +544,64 @@ python test_complete_system.py
 
 ```
 agentarc/
-├── agentarc/                 # Main package
-│   ├── __init__.py
-│   ├── __main__.py             # CLI entry point
-│   ├── policy_engine.py        # Multi-stage validation pipeline
-│   ├── wallet_wrapper.py       # Wallet provider wrapper
-│   ├── calldata_parser.py      # ABI decoding
-│   ├── simulator.py            # Basic transaction simulation
-│   ├── logger.py               # Logging system
-│   ├── llm_judge.py            # LLM-based security analysis
-│   ├── simulators/
-│   │   └── tenderly.py         # Tenderly integration
-│   └── rules/                  # Policy validators
-│       ├── __init__.py
-│       └── validators.py
-├── examples/                   # Usage examples
-│   ├── basic_usage.py
-│   ├── onchain-agent/          # Production chatbot
-│   └── autonomous-portfolio-agent/  # Autonomous agent
-├── tests/                      # Test suite
+├── agentarc/                    # Main package
+│   ├── __init__.py              # Public API exports
+│   ├── __main__.py              # CLI entry point
+│   ├── core/                    # Core abstractions
+│   │   ├── config.py            # PolicyConfig for YAML loading
+│   │   ├── types.py             # TypedDict definitions
+│   │   ├── errors.py            # Custom exceptions
+│   │   ├── interfaces.py        # Protocol definitions
+│   │   └── events.py            # Event types
+│   ├── engine/                  # Validation pipeline
+│   │   ├── policy_engine.py     # Main orchestrator
+│   │   ├── pipeline.py          # ValidationPipeline
+│   │   ├── context.py           # ValidationContext
+│   │   ├── factory.py           # ComponentFactory (DI)
+│   │   └── stages/              # Pipeline stages
+│   │       ├── intent.py        # Intent parsing
+│   │       ├── policy.py        # Policy validation
+│   │       ├── simulation.py    # Transaction simulation
+│   │       ├── honeypot.py      # Honeypot detection
+│   │       └── llm.py           # LLM analysis
+│   ├── validators/              # Plugin-based validators
+│   │   ├── base.py              # PolicyValidator ABC
+│   │   ├── registry.py          # ValidatorRegistry
+│   │   └── builtin/             # 7 built-in validators
+│   │       ├── address.py       # Allowlist/Denylist
+│   │       ├── limits.py        # Value/Token limits
+│   │       ├── gas.py           # Gas limit
+│   │       └── functions.py     # Function allowlist
+│   ├── wallets/                 # Universal wallet support
+│   │   ├── base.py              # WalletAdapter ABC
+│   │   ├── factory.py           # WalletFactory
+│   │   ├── policy_wallet.py     # PolicyWallet wrapper
+│   │   └── adapters/            # Wallet implementations
+│   │       ├── private_key.py   # PrivateKeyWallet
+│   │       ├── mnemonic.py      # MnemonicWallet
+│   │       └── cdp.py           # CdpWalletAdapter
+│   ├── frameworks/              # Multi-framework adapters
+│   │   ├── base.py              # FrameworkAdapter ABC
+│   │   ├── agentkit.py          # Coinbase AgentKit
+│   │   ├── langchain.py         # LangChain adapter
+│   │   └── openai_sdk.py        # OpenAI SDK adapter
+│   ├── simulators/              # Transaction simulation
+│   │   ├── basic.py             # Basic eth_call simulator
+│   │   └── tenderly.py          # Tenderly integration
+│   ├── analysis/                # Security analysis
+│   │   └── llm_judge.py         # LLM-based threat detection
+│   ├── parsers/                 # Calldata parsing
+│   │   └── calldata.py          # ABI decoding
+│   ├── compat/                  # Legacy compatibility
+│   │   └── wallet_wrapper.py    # PolicyWalletProvider
+│   ├── log/                     # Logging system
+│   │   └── logger.py            # PolicyLogger
+│   └── events/                  # Event streaming
+│       └── events.py            # EventEmitter
+├── examples/                    # Usage examples
+│   ├── basic-chat-agent/        # Production chatbot with frontend
+│   └── autonomous-portfolio-agent/  # AI portfolio manager
+├── tests/                     
 ├── README.md
 ├── CHANGELOG.md
 └── pyproject.toml
@@ -560,13 +611,29 @@ agentarc/
 
 ## 🤝 Compatibility
 
-AgentARC works with all Coinbase AgentKit wallet providers:
+### Framework Support
+
+AgentARC integrates with popular AI agent frameworks:
+
+- ✅ **Coinbase AgentKit** - Primary integration with full support
+- ✅ **LangChain** - LangChainAdapter for LangChain agents
+- ✅ **OpenAI SDK** - OpenAIAdapter for function-calling agents
+
+### Wallet Support
+
+Universal wallet support for any blockchain interaction:
+
+- ✅ **Private Key Wallets** - Direct private key management
+- ✅ **Mnemonic Wallets** - HD wallet derivation (BIP-39/44)
+- ✅ **CDP Wallets** - Coinbase Developer Platform integration
+
+### AgentKit Wallet Providers
+
+For Coinbase AgentKit users:
 
 - ✅ **CDP EVM Wallet Provider**
 - ✅ **CDP Smart Wallet Provider**
 - ✅ **Ethereum Account Wallet Provider**
-
-Same 3-line integration pattern for all wallet types!
 
 ---
 
