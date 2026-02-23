@@ -39,6 +39,9 @@ from .adapters import (
     PrivateKeyWallet,
     MnemonicWallet,
     CdpWalletAdapter,
+    SmartWalletAdapter,
+    ERC4337Adapter,
+    SafeAdapter,
 )
 
 __all__ = [
@@ -49,4 +52,7 @@ __all__ = [
     "PrivateKeyWallet",
     "MnemonicWallet",
     "CdpWalletAdapter",
+    "SmartWalletAdapter",
+    "ERC4337Adapter",
+    "SafeAdapter",
 ]

@@ -21,8 +21,26 @@ try:
 except ImportError:
     CdpWalletAdapter = None  # type: ignore
 
+try:
+    from .smart_wallet_base import SmartWalletAdapter
+except ImportError:
+    SmartWalletAdapter = None  # type: ignore
+
+try:
+    from .erc4337 import ERC4337Adapter
+except ImportError:
+    ERC4337Adapter = None  # type: ignore
+
+try:
+    from .safe_adapter import SafeAdapter
+except ImportError:
+    SafeAdapter = None  # type: ignore
+
 __all__ = [
     "PrivateKeyWallet",
     "MnemonicWallet",
     "CdpWalletAdapter",
+    "SmartWalletAdapter",
+    "ERC4337Adapter",
+    "SafeAdapter",
 ]

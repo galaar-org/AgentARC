@@ -1,0 +1,48 @@
+version: "2.0"
+enabled: true
+
+logging:
+  level: info
+
+policies:
+  - type: eth_value_limit
+    enabled: true
+    max_value_wei: "1000000000000000000"  # 1 ETH
+    description: "Limit ETH transfers to 1 ETH per transaction"
+
+  - type: address_denylist
+    enabled: true
+    denied_addresses: []  # Add known-bad addresses here
+    description: "Block transactions to denied addresses"
+
+  - type: per_asset_limit
+    enabled: true
+    asset_limits:
+      - name: USDC
+        address: "0x036CbD53842c5426634e7929541eC2318f3dCF7e"  # Base Sepolia USDC
+        max_amount: "10000000"  # 10 USDC (6 decimals)
+        decimals: 6
+    description: "Per-asset spending limits"
+
+  - type: gas_limit
+    enabled: true
+    max_gas: 500000
+    description: "Limit gas to 500k per transaction"
+
+simulation:
+  enabled: true
+  fail_on_revert: true
+  estimate_gas: true
+  print_trace: false
+
+calldata_validation:
+  enabled: true
+  strict_mode: false
+
+llm_validation:
+  enabled: false
+  provider: "openai"
+  model: "gpt-4o-mini"
+  api_key: "${OPENAI_API_KEY}"
+  block_threshold: 0.70
+  warn_threshold: 0.40

@@ -123,6 +123,9 @@ try:
         PrivateKeyWallet,
         MnemonicWallet,
         CdpWalletAdapter,
+        SmartWalletAdapter,
+        ERC4337Adapter,
+        SafeAdapter,
     )
 except ImportError:
     WalletAdapter = None  # type: ignore
@@ -131,6 +134,9 @@ except ImportError:
     PrivateKeyWallet = None  # type: ignore
     MnemonicWallet = None  # type: ignore
     CdpWalletAdapter = None  # type: ignore
+    SmartWalletAdapter = None  # type: ignore
+    ERC4337Adapter = None  # type: ignore
+    SafeAdapter = None  # type: ignore
 
 # Frameworks module - Multi-framework adapters (phase 2 - optional)
 try:
@@ -221,6 +227,9 @@ __all__ = [
     "PrivateKeyWallet",
     "MnemonicWallet",
     "CdpWalletAdapter",
+    "SmartWalletAdapter",
+    "ERC4337Adapter",
+    "SafeAdapter",
     # Frameworks module
     "FrameworkAdapter",
     "LangChainAdapter",
