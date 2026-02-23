@@ -1,0 +1,56 @@
+"""
+{project_name} - AgentARC Protected Agent (ERC-4337 Smart Wallet + OpenAI SDK)
+"""
+import os
+import json
+from dotenv import load_dotenv
+load_dotenv()
+
+from openai import OpenAI
+from agentarc import WalletFactory, PolicyWallet, OpenAIAdapter
+
+# 1. Create ERC-4337 smart wallet
+wallet = WalletFactory.from_erc4337(
+    owner_key=os.environ["OWNER_PRIVATE_KEY"],
+    bundler_url=os.environ["BUNDLER_URL"],
+    rpc_url=os.environ["RPC_URL"],
+)
+
+# 2. Wrap with policy enforcement
+policy_wallet = PolicyWallet(wallet, config_path="policy.yaml")
+
+# 3. Create OpenAI tools — same API, works with any wallet type
+adapter = OpenAIAdapter()
+tools = adapter.create_all_tools(policy_wallet)
+
+print(f"Smart Account: {{policy_wallet.get_address()}}")
+print(f"Owner EOA: {{wallet.get_owner_address()}}")
+print(f"Deployed: {{wallet.is_deployed()}}")
+print(f"Policies active: {{len(policy_wallet.get_config().get_enabled_policies())}}")
+
+# 4. Chat loop (identical to EOA version — framework code doesn't change)
+client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+messages = [{{"role": "system", "content": "You are a blockchain agent with a smart wallet."}}]
+
+while True:
+    user_input = input("\nYou: ")
+    if user_input.lower() in ("quit", "exit"):
+        break
+
+    messages.append({{"role": "user", "content": user_input}})
+    response = client.chat.completions.create(
+        model="gpt-4o-mini", messages=messages, tools=tools
+    )
+
+    assistant_message = response.choices[0].message
+    while assistant_message.tool_calls:
+        messages.append(assistant_message)
+        tool_results = adapter.process_tool_calls(response, policy_wallet)
+        messages.extend(tool_results)
+        response = client.chat.completions.create(
+            model="gpt-4o-mini", messages=messages, tools=tools
+        )
+        assistant_message = response.choices[0].message
+
+    messages.append(assistant_message)
+    print(f"\nAgent: {{assistant_message.content}}")

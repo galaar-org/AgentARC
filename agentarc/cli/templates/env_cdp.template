@@ -1,0 +1,12 @@
+# Coinbase CDP Wallet
+CDP_API_KEY_NAME=your_cdp_key_name
+CDP_API_KEY_PRIVATE_KEY=your_cdp_private_key
+NETWORK_ID=base-sepolia
+
+# OpenAI (for agent and optional LLM validation)
+OPENAI_API_KEY=your_openai_key
+
+# Optional: Tenderly Simulation (Stage 3)
+# TENDERLY_ACCESS_KEY=your_tenderly_key
+# TENDERLY_ACCOUNT_SLUG=your_account
+# TENDERLY_PROJECT_SLUG=your_project

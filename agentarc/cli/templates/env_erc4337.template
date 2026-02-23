@@ -1,0 +1,13 @@
+# ERC-4337 Smart Wallet
+OWNER_PRIVATE_KEY=your_owner_eoa_private_key
+BUNDLER_URL=https://api.pimlico.io/v2/84532/rpc?apikey=YOUR_PIMLICO_KEY
+RPC_URL=https://sepolia.base.org
+# ACCOUNT_ADDRESS=0x...  # Optional: provide if already deployed
+
+# OpenAI (for agent and optional LLM validation)
+OPENAI_API_KEY=your_openai_key
+
+# Optional: Tenderly Simulation (Stage 3)
+# TENDERLY_ACCESS_KEY=your_tenderly_key
+# TENDERLY_ACCOUNT_SLUG=your_account
+# TENDERLY_PROJECT_SLUG=your_project
