@@ -1,645 +1,510 @@
 # AgentARC - Security Layer for AI Blockchain Agents
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/galaar-org/AgentARC)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/galaar-org/AgentARC)
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![GitHub](https://img.shields.io/badge/github-galaar-org)](https://github.com/galaar-org)
 [![PyPI version](https://img.shields.io/pypi/v/agentarc.svg)](https://pypi.org/project/agentarc/)
 
-
 **Advanced security and policy enforcement layer for AI blockchain agents with multi-stage validation, transaction simulation, and threat detection across DeFi + smart-contract attack surfaces, with LLM-based risk analysis.**
-
-## 🎯 Overview
-
-AgentARC provides a comprehensive security framework for AI agents interacting with blockchain networks. It validates all transactions through multiple security stages before execution, reducing exposure to the broader DeFi threat surface and common smart-contract attack planes, including:
-
-- 💰 Unauthorized fund transfers and unexpected value movement
-- 🔓 Hidden or unlimited token approvals and allowance abuse
-- 🧨 Malicious smart contracts and hostile call chains (e.g., delegatecall to untrusted code)
-- 🎣 Token traps (honeypots, sell-blocks, malicious fee mechanics)
-- 🌊 Liquidity and price-manipulation patterns (context-dependent)
-- 🔄 Reentrancy-style execution hazards and unexpected re-calls
-- 🧾 Suspicious fund-flow anomalies and downstream interactions that don’t match intent
-
-These are representative examples, not an exhaustive list. AgentARC is designed to expand with more DeFi and smart-contract threat cases over time.
-
-
-### Key Features
-
-
-- ✅ **Multi-Stage Validation Pipeline**: Intent → Policies → Simulation → Threat Detection
-- ✅ **Comprehensive Policy Engine**: 7 policy types for granular control
-- ✅ **Transaction Simulation**: Tenderly integration for detailed execution traces
-- ✅ **Threat Detection (Includes Honeypots)**: Automated checks for token traps and other suspicious patterns
-- ✅ **Optional LLM-based Security**: AI-powered malicious activity detection and risk scoring
-- ✅ **Zero Agent Modifications**: Pure wrapper pattern for AgentKit
-- ✅ **Asset Change Tracking**: Monitor balance changes before execution
 
 ---
 
-## 🚀 Quick Start
+## What is AgentARC?
+
+AgentARC sits between your AI agent and the blockchain. Every transaction the agent wants to send passes through a 4-stage validation pipeline **before signing** — catching threats that would otherwise reach the chain.
+
+```
+Agent wants to send a transaction
+          │
+          ▼
+┌─────────────────────────────────────┐
+│         AgentARC Pipeline           │
+│                                     │
+│  Stage 1: Intent Analysis           │
+│  → parse calldata, identify action  │
+│                                     │
+│  Stage 2: Policy Validation         │
+│  → spending limits, allow/denylists │
+│                                     │
+│  Stage 3: Transaction Simulation    │
+│  → Tenderly sandbox test            │
+│                                     │
+│  Stage 3.5: Honeypot Detection      │
+│  → test buy + sell before buying    │
+│                                     │
+│  Stage 4: LLM Security Analysis     │
+│  → AI threat detection (optional)   │
+└──────────────┬──────────────────────┘
+               │
+      BLOCKED ─┤─ APPROVED
+               │
+               ▼
+        Wallet executes
+   (EOA / ERC-4337 / Safe / CDP)
+```
+
+Threats it catches:
+
+- Unauthorized fund transfers and unexpected value movement
+- Hidden or unlimited token approvals and allowance abuse
+- Malicious smart contracts and hostile call chains
+- Token traps (honeypots, sell-blocks, malicious fee mechanics)
+- Liquidity and price-manipulation patterns
+- Reentrancy-style execution hazards
+- Suspicious fund-flow anomalies
+
+---
+
+## Key Features
+
+- **Multi-Stage Validation Pipeline** — Intent → Policies → Simulation → Threat Detection
+- **7 Policy Types** — ETH limits, address allow/denylists, per-asset limits, gas limits, function allowlists
+- **Universal Wallet Support** — EOA, ERC-4337 smart wallets, Safe multisig, Coinbase CDP
+- **Framework Adapters** — OpenAI SDK, LangChain, AgentKit — same API for all
+- **Transaction Simulation** — Tenderly integration for full execution traces
+- **Honeypot Detection** — Automatically test buy + sell before any token purchase
+- **LLM Security Analysis** — AI-powered malicious pattern detection (optional)
+- **Interactive CLI Wizard** — Scaffold a new project in under a minute
+
+---
+
+## Quick Start
 
 ### Installation
 
 ```bash
-# Install from PyPI (recommended)
+# Core install (EOA + CDP wallets, no framework adapters)
 pip install agentarc
 
-# Or install from source
-git clone https://github.com/galaar-org/AgentARC.git
-cd agentarc
-pip install -e .
+# With OpenAI SDK support
+pip install agentarc[openai]
 
-# Verify installation
-agentarc --help
+# With LangChain support
+pip install agentarc[langchain]
+
+# With ERC-4337 smart wallet support
+pip install agentarc[smart-wallets]
+
+# With Safe multisig support
+pip install agentarc[safe]
+
+# Everything
+pip install agentarc[all]
 ```
 
-### Setup Policy Configuration
+### Scaffold a new project (recommended)
+
+The interactive CLI wizard creates a complete project for your chosen wallet type and framework:
 
 ```bash
-# Generate default policy.yaml
 agentarc setup
-
-# Edit policy.yaml to configure your security rules
-vim policy.yaml
 ```
 
-### Integration (3 Lines of Code)
+```
+==================================================
+          AgentARC Setup Wizard
+==================================================
+
+Is this for an existing or new project? [existing/new]: new
+Enter your project name [my-secure-agent]: my-agent
+Choose your agent framework [openai/langchain]: openai
+Choose wallet type [eoa/erc4337/safe/cdp]: eoa
+Choose network (number or name) [1]: 1   (Base Sepolia)
+Select policy templates: 1,2             (Spending Limits + Denylist)
+
+Project created at: ./my-agent
+
+Files created:
+  agent.py            <- EOA + OPENAI agent
+  policy.yaml         <- Off-chain policy config
+  .env.example        <- Environment variables for EOA
+  requirements.txt    <- Python dependencies
+  .gitignore
+
+Next steps:
+  cd my-agent
+  cp .env.example .env
+  # Add your keys to .env
+  pip install -r requirements.txt
+  python agent.py
+```
+
+The wizard supports all combinations of wallet × framework and generates the correct `agent.py`, `policy.yaml`, `.env.example`, and `requirements.txt` for each.
+
+---
+
+## Wallet Support
+
+AgentARC works with four wallet types. Your agent code changes by **one line**:
 
 ```python
-from agentarc import PolicyWalletProvider, PolicyEngine
-from coinbase_agentkit import AgentKit, CdpEvmWalletProvider
+from agentarc import WalletFactory, PolicyWallet, OpenAIAdapter
 
-# Create base wallet
-base_wallet = CdpEvmWalletProvider(config)
+# EOA — normal private key wallet
+wallet = WalletFactory.from_private_key(private_key, rpc_url)
 
-# Wrap with AgentARC (add security layer)
-policy_engine = PolicyEngine(
-    config_path="policy.yaml",
-    web3_provider=base_wallet,
-    chain_id=84532  # Base Sepolia
+# ERC-4337 — smart contract wallet, transactions go through a bundler
+wallet = WalletFactory.from_erc4337(owner_key, bundler_url, rpc_url)
+
+# Safe — Gnosis Safe multisig wallet
+wallet = WalletFactory.from_safe(safe_address, signer_key, rpc_url)
+
+# CDP — Coinbase Developer Platform wallet
+wallet = WalletFactory.from_cdp(cdp_provider)
+
+# Everything below is identical for all four wallet types
+policy_wallet = PolicyWallet(wallet, config_path="policy.yaml")
+adapter = OpenAIAdapter()
+tools = adapter.create_all_tools(policy_wallet)
+```
+
+### Wallet type comparison
+
+| | EOA | ERC-4337 | Safe | CDP |
+|--|--|--|--|--|
+| Wallet address | key address | smart contract | safe contract | CDP managed |
+| Gas sponsorship | no | yes (Paymaster) | no | no |
+| Multi-signature | no | no | yes | no |
+| Requires bundler | no | yes | no | no |
+| Best for | testing, simple agents | production agents | teams, DAOs | AgentKit |
+
+### ERC-4337 specifics
+
+The smart account address is **counterfactual** — derived from your owner key before the contract is deployed. Fund the smart account address and it auto-deploys on first transaction.
+
+```python
+wallet = WalletFactory.from_erc4337(
+    owner_key=os.environ["OWNER_PRIVATE_KEY"],
+    bundler_url="https://api.pimlico.io/v2/84532/rpc?apikey=...",
+    rpc_url="https://sepolia.base.org",
 )
-policy_wallet = PolicyWalletProvider(base_wallet, policy_engine)
 
-# Use with AgentKit - no other changes needed!
-agentkit = AgentKit(wallet_provider=policy_wallet, action_providers=[...])
+wallet.get_address()        # smart account address (holds funds)
+wallet.get_owner_address()  # owner EOA address (signs UserOps)
+wallet.is_deployed()        # False until first transaction
 ```
 
-That's it! All transactions now go through multi-stage security validation.
+Get a free bundler URL at [pimlico.io](https://pimlico.io) or [alchemy.com](https://alchemy.com).
+
+### Safe specifics
+
+```python
+wallet = WalletFactory.from_safe(
+    safe_address=os.environ["SAFE_ADDRESS"],
+    signer_key=os.environ["SIGNER_PRIVATE_KEY"],
+    rpc_url="https://sepolia.base.org",
+    auto_execute=True,  # execute immediately if threshold == 1
+)
+
+wallet.get_address()      # Safe contract address (holds funds)
+wallet.get_owner_address() # signer EOA address
+wallet.get_threshold()    # number of required signatures
+wallet.get_owners()       # list of all Safe owner addresses
+```
+
+Deploy a Safe for free at [app.safe.global](https://app.safe.global).
 
 ---
 
-## 📚 Examples
+## Framework Support
 
-### 1. Basic Usage (`examples/basic_usage.py`)
+AgentARC has adapters for OpenAI SDK and LangChain. Both work identically with any wallet type.
 
-Simple demonstration with mock wallet provider.
+### OpenAI SDK
 
-```bash
-cd examples
-python basic_usage.py
+```python
+from agentarc import WalletFactory, PolicyWallet
+from agentarc.frameworks import OpenAIAdapter
+from openai import OpenAI
+
+wallet = WalletFactory.from_private_key(os.environ["PRIVATE_KEY"], os.environ["RPC_URL"])
+policy_wallet = PolicyWallet(wallet, config_path="policy.yaml")
+
+adapter = OpenAIAdapter()
+tools = adapter.create_all_tools(policy_wallet)
+# tools: send_transaction, get_wallet_balance, get_wallet_info, validate_transaction
+
+client = OpenAI()
+response = client.chat.completions.create(model="gpt-4o-mini", messages=messages, tools=tools)
+tool_results = adapter.process_tool_calls(response, policy_wallet)
 ```
 
-**Features:**
-- Mock wallet implementation
-- Policy validation examples
-- Error handling demonstration
+### LangChain + LangGraph
 
-### 2. OnChain Agent (`examples/onchain-agent/`)
+```python
+from agentarc import WalletFactory, PolicyWallet
+from agentarc.frameworks import LangChainAdapter
+from langchain_openai import ChatOpenAI
+from langgraph.prebuilt import create_react_agent
 
-Production-ready Coinbase AgentKit chatbot with AgentARC.
+wallet = WalletFactory.from_private_key(os.environ["PRIVATE_KEY"], os.environ["RPC_URL"])
+policy_wallet = PolicyWallet(wallet, config_path="policy.yaml")
 
-```bash
-cd examples/onchain-agent
-cp .env.example .env
-# Edit .env with your API keys
+adapter = LangChainAdapter()
+tools = adapter.create_all_tools(policy_wallet)  # List[StructuredTool]
 
-pip install -r requirements.txt
-python chatbot.py
+llm = ChatOpenAI(model="gpt-4o-mini")
+agent = create_react_agent(llm, tools=tools)
 ```
-
-**Features:**
-- ✅ Real CDP wallet integration
-- ✅ Interactive chatbot interface
-- ✅ Complete policy configuration
-
-**See:** [OnChain Agent README](examples/onchain-agent/README.md)
-
-### 3. Autonomous Portfolio Agent (`examples/autonomous-portfolio-agent/`)
-
-AI agent that autonomously manages a crypto portfolio with honeypot protection.
-
-```bash
-cd examples/autonomous-portfolio-agent
-cp .env.example .env
-# Edit .env
-
-pip install -r requirements.txt
-python autonomous_agent.py
-```
-
-**Features:**
-- ✅ Autonomous portfolio rebalancing
-- ✅ Automatic honeypot detection
-- ✅ Multi-layer security (policies + simulation + LLM)
-- ✅ Zero manual blacklisting
-- ✅ Demonstrates honeypot token blocking in action
-
-**See:** [Autonomous Portfolio Agent README](examples/autonomous-portfolio-agent/README.md) and [Honeypot Demo](examples/autonomous-portfolio-agent/HONEYPOT_DEMO.md)
 
 ---
 
-## 🛡️ Security Pipeline
+## Security Pipeline
 
-AgentARC validates every transaction through 4 stages:
-
-### Stage 1: Intent Judge
-- Parse transaction calldata
-- Identify function calls and parameters
-- Detect token transfers and approvals
+### Stage 1: Intent Analysis
+Parses transaction calldata to understand what the transaction does — identifies function calls, token transfers, approvals, and parameter values.
 
 ### Stage 2: Policy Validation
-- ETH value limits
-- Address allowlist/denylist
-- Per-asset spending limits
-- Gas limits
-- Function allowlists
+Runs all enabled policy rules against the transaction:
+
+| Policy | What it blocks |
+|--------|---------------|
+| `eth_value_limit` | ETH transfers above a max per transaction |
+| `address_denylist` | Transactions to specific blocked addresses |
+| `address_allowlist` | Transactions to any address not on the list |
+| `per_asset_limit` | ERC-20 transfers above a per-token limit |
+| `token_amount_limit` | ERC-20 transfers above a global limit |
+| `gas_limit` | Transactions requesting more than a gas cap |
+| `function_allowlist` | Any function call not on the allowed list |
 
 ### Stage 3: Transaction Simulation
-- Tenderly simulation with full execution traces
-- Asset/balance change tracking
-- Gas estimation
-- Revert detection
+Simulates the transaction in a Tenderly sandbox before sending. Catches reverts, unexpected asset changes, and gas spikes without spending real gas.
 
 ### Stage 3.5: Honeypot Detection
-- Simulate token BUY transaction
-- Automatically test SELL transaction
-- Block if tokens cannot be sold back
-- **Zero manual blacklisting needed**
+When a token BUY is detected, AgentARC automatically simulates a SELL. If the sell fails, the buy is blocked — zero manual blacklisting required.
 
-### Stage 4: LLM Security Analysis (Optional)
-- AI-powered malicious pattern detection
-- Hidden approval detection
-- Unusual fund flow analysis
-- Risk scoring and recommendations
-
----
-
-## 📋 Policy Types
-
-### 1. ETH Value Limit
-
-Prevent large ETH transfers per transaction.
-
-```yaml
-policies:
-  - type: eth_value_limit
-    max_value_wei: "1000000000000000000"  # 1 ETH
-    enabled: true
-    description: "Limit ETH transfers to 1 ETH per transaction"
+```
+BUY detected → simulate SELL → SELL fails → HONEYPOT BLOCKED
 ```
 
-### 2. Address Denylist
-
-Block transactions to sanctioned or malicious addresses.
-
-```yaml
-policies:
-  - type: address_denylist
-    denied_addresses:
-      - "0xSanctionedAddress1..."
-      - "0xMaliciousContract..."
-    enabled: true
-    description: "Block transactions to denied addresses"
-```
-
-### 3. Address Allowlist
-
-Only allow transactions to pre-approved addresses (whitelist mode).
-
-```yaml
-policies:
-  - type: address_allowlist
-    allowed_addresses:
-      - "0xTrustedContract1..."
-      - "0xTrustedContract2..."
-    enabled: false  # Disabled by default
-    description: "Only allow transactions to approved addresses"
-```
-
-### 4. Per-Asset Limits
-
-Different spending limits for each token.
-
-```yaml
-policies:
-  - type: per_asset_limit
-    asset_limits:
-      - name: USDC
-        address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
-        max_amount: "10000000"  # 10 USDC
-        decimals: 6
-      - name: DAI
-        address: "0x6B175474E89094C44Da98b954EedeAC495271d0F"
-        max_amount: "100000000000000000000"  # 100 DAI
-        decimals: 18
-    enabled: true
-    description: "Per-asset spending limits"
-```
-
-### 5. Token Amount Limit
-
-Limit token transfers across all ERC20 tokens.
-
-```yaml
-policies:
-  - type: token_amount_limit
-    max_amount: "1000000000000000000000"  # 1000 tokens (18 decimals)
-    enabled: false
-    description: "Limit token transfers per transaction"
-```
-
-### 6. Gas Limit
-
-Prevent expensive transactions.
-
-```yaml
-policies:
-  - type: gas_limit
-    max_gas: 500000
-    enabled: true
-    description: "Limit gas to 500k per transaction"
-```
-
-### 7. Function Allowlist
-
-Only allow specific function calls.
-
-```yaml
-policies:
-  - type: function_allowlist
-    allowed_functions:
-      - "eth_transfer"
-      - "transfer"
-      - "approve"
-      - "swap"
-    enabled: false
-    description: "Only allow specific function calls"
-```
-
----
-
-## 🔬 Advanced Features
-
-### Tenderly Simulation
-
-Enable advanced transaction simulation with full execution traces and asset tracking:
-
-```yaml
-simulation:
-  enabled: true
-  fail_on_revert: true
-  estimate_gas: true
-  print_trace: false  # Set to true for detailed execution traces
-```
-
-**Setup Tenderly (optional but recommended):**
-
-```bash
-# Add to .env
-TENDERLY_ACCESS_KEY=your_access_key
-TENDERLY_ACCOUNT_SLUG=your_account
-TENDERLY_PROJECT_SLUG=your_project
-```
-
-**Capabilities:**
-- ✅ Full call trace analysis
-- ✅ Asset/balance change tracking
-- ✅ Event log decoding
-- ✅ Gas prediction
-- ✅ State modification tracking
-
-**Output Example:**
-```
-Stage 3: Transaction Simulation
-✅ Simulation successful (gas: 166300)
-Asset changes:
-  0x1234567... (erc20): +1000
-  0xabcdef0... (erc20): -500
-```
-
-**With `print_trace: true`:**
-```
-Tenderly Simulation Details
-----------------------------------------
-Call Trace:
-  [1] CALL: 0x1234567... → 0xabcdef0... (value: 0.5 ETH, gas: 50000)
-    [1] DELEGATECALL: 0xabcdef0... → 0x9876543... (value: 0 ETH, gas: 30000)
-    [2] CALL: 0xabcdef0... → 0x5555555... (value: 0 ETH, gas: 15000)
-
-Asset/Balance Changes:
-  0x1234567... (erc20): +1000
-  0xabcdef0... (erc20): -500
-
-Events Emitted:
-  [1] Transfer
-  [2] Approval
-  [3] Swap
-```
-
-### LLM-based Security Validation
-
-Enable AI-powered malicious activity detection:
-
-```yaml
-llm_validation:
-  enabled: true
-  provider: "openai"  # or "anthropic"
-  model: "gpt-4o-mini"
-  api_key: "${OPENAI_API_KEY}"  # or set in environment
-  block_threshold: 0.70  # Block if confidence >= 70%
-  warn_threshold: 0.40   # Warn if confidence >= 40%
-```
-
-**What LLM Analyzes:**
+### Stage 4: LLM Security Analysis (optional)
+Uses an LLM to detect sophisticated attacks that rule-based checks miss:
 - Hidden token approvals
-- Unusual fund flow patterns
-- Reentrancy attack patterns
+- Reentrancy patterns
 - Flash loan exploits
-- Sandwich/MEV attacks
-- Phishing attempts
-- Hidden fees and draining
-- Delegatecall to untrusted contracts
-- Honeypot token indicators
+- Phishing contracts
+- Hidden fees and fund draining
 
-**Example Output:**
-```
-Stage 4: LLM-based Security Validation
-⚠️  LLM warning: Detected unlimited token approval to unknown contract
-Confidence: 65% | Risk: MEDIUM
-Indicators: unlimited_approval, unknown_recipient
-```
-
-### Honeypot Detection
-
-Automatically detect scam tokens that can be bought but not sold:
-
-**How it works:**
-1. Transaction initiates a token purchase (BUY)
-2. AgentARC simulates the BUY
-3. Detects token receipt via Transfer events
-4. Automatically simulates a SELL transaction
-5. If SELL fails → **HONEYPOT DETECTED** → Block original BUY
-
-**Configuration:**
-```yaml
-# Honeypot detection is automatic when Tenderly simulation is enabled
-simulation:
-  enabled: true
-```
-
-**Example Output:**
-```
-Stage 3.5: Honeypot Detection
-🔍 Token BUY detected. Checking if tokens can be sold back...
-🧪 Testing sell for token 0xFe8365...
-❌ Sell simulation FAILED/REVERTED
-🛡️  ❌ BLOCKED: HONEYPOT DETECTED
-   Token 0xFe8365... can be bought but cannot be sold
-```
+Cost: ~$0.003 per transaction with `gpt-4o-mini`.
 
 ---
 
-## 📊 Logging Levels
-
-Control output verbosity in `policy.yaml`:
+## Policy Configuration
 
 ```yaml
-logging:
-  level: info  # minimal, info, or debug
-```
-
-- **minimal**: Only final decisions (ALLOWED/BLOCKED)
-- **info**: Full validation pipeline (recommended)
-- **debug**: Detailed debugging information including trace counts
-
----
-
-## 🔧 Complete Configuration Example
-
-`policy.yaml`:
-
-```yaml
+# policy.yaml
 version: "2.0"
-apply_to: [all]
+enabled: true
 
-# Logging configuration
 logging:
-  level: info  # minimal, info, debug
+  level: info  # minimal | info | debug
 
-# Policy rules
 policies:
   - type: eth_value_limit
-    max_value_wei: "1000000000000000000"  # 1 ETH
     enabled: true
-    description: "Limit ETH transfers to 1 ETH per transaction"
+    max_value_wei: "1000000000000000000"  # 1 ETH
 
   - type: address_denylist
-    denied_addresses: []
     enabled: true
-    description: "Block transactions to denied addresses"
-
-  - type: address_allowlist
-    allowed_addresses: []
-    enabled: false
-    description: "Only allow transactions to approved addresses"
+    denied_addresses:
+      - "0xScamAddress..."
 
   - type: per_asset_limit
+    enabled: true
     asset_limits:
       - name: USDC
         address: "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
         max_amount: "10000000"  # 10 USDC
         decimals: 6
-      - name: DAI
-        address: "0x6B175474E89094C44Da98b954EedeAC495271d0F"
-        max_amount: "100000000000000000000"  # 100 DAI
-        decimals: 18
-    enabled: true
-    description: "Per-asset spending limits"
-
-  - type: token_amount_limit
-    max_amount: "1000000000000000000000"  # 1000 tokens
-    enabled: false
-    description: "Limit token transfers per transaction"
-
-  - type: function_allowlist
-    allowed_functions:
-      - "eth_transfer"
-      - "transfer"
-      - "approve"
-    enabled: false
-    description: "Only allow specific function calls"
 
   - type: gas_limit
-    max_gas: 500000
     enabled: true
-    description: "Limit gas to 500k per transaction"
+    max_gas: 500000
 
-# Transaction simulation
 simulation:
   enabled: true
   fail_on_revert: true
   estimate_gas: true
-  print_trace: false  # Enable for detailed execution traces
 
-# Calldata validation
-calldata_validation:
-  enabled: true
-  strict_mode: false
-
-# LLM-based validation (optional)
 llm_validation:
-  enabled: false
-  provider: "openai"
-  model: "gpt-4o-mini"
-  api_key: "${OPENAI_API_KEY}"
+  enabled: false          # set true to enable AI threat detection
+  provider: openai
+  model: gpt-4o-mini
   block_threshold: 0.70
   warn_threshold: 0.40
 ```
 
 ---
 
-## 🧪 Testing
+## Examples
 
-Run the test suite:
+### basic-chat-agent (`examples/basic-chat-agent/`)
+
+A simple chat agent using a normal EOA wallet. Good starting point for understanding the AgentARC integration pattern.
 
 ```bash
-cd tests
-python test_complete_system.py
+cd examples/basic-chat-agent
+cp .env.example .env
+# Add PRIVATE_KEY, RPC_URL, OPENAI_API_KEY to .env
+pip install -r requirements.txt
+python openai_chat_agent.py    # OpenAI SDK version
+python langchain_chat_agent.py # LangChain version
 ```
 
-**Tests cover:**
-- ETH value limits
-- Address denylist/allowlist
-- Per-asset limits
-- Gas limits
-- Calldata parsing
-- All logging levels
+See [examples/basic-chat-agent/README.md](examples/basic-chat-agent/README.md)
+
+### smart-wallet-agents (`examples/smart-wallet-agents/`)
+
+Chat agents using ERC-4337 and Safe wallets. Demonstrates that the agent code is identical to the EOA version — only the wallet setup changes.
+
+```bash
+cd examples/smart-wallet-agents
+cp .env.example .env
+
+# ERC-4337 smart wallet agent
+# Add OWNER_PRIVATE_KEY, BUNDLER_URL, RPC_URL, OPENAI_API_KEY to .env
+python erc4337_agent.py
+
+# Safe multisig agent
+# Add SAFE_ADDRESS, SIGNER_PRIVATE_KEY, RPC_URL, OPENAI_API_KEY to .env
+python safe_agent.py
+```
+
+See [examples/smart-wallet-agents/README.md](examples/smart-wallet-agents/README.md)
+
+### autonomous-portfolio-agent (`examples/autonomous-portfolio-agent/`)
+
+Autonomous agent that manages a crypto portfolio with automatic honeypot protection.
+
+```bash
+cd examples/autonomous-portfolio-agent
+cp .env.example .env
+pip install -r requirements.txt
+python autonomous_agent.py
+```
+
+See [examples/autonomous-portfolio-agent/README.md](examples/autonomous-portfolio-agent/README.md)
 
 ---
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 agentarc/
-├── agentarc/                 # Main package
-│   ├── __init__.py
-│   ├── __main__.py             # CLI entry point
-│   ├── policy_engine.py        # Multi-stage validation pipeline
-│   ├── wallet_wrapper.py       # Wallet provider wrapper
-│   ├── calldata_parser.py      # ABI decoding
-│   ├── simulator.py            # Basic transaction simulation
-│   ├── logger.py               # Logging system
-│   ├── llm_judge.py            # LLM-based security analysis
-│   ├── simulators/
-│   │   └── tenderly.py         # Tenderly integration
-│   └── rules/                  # Policy validators
-│       ├── __init__.py
-│       └── validators.py
-├── examples/                   # Usage examples
-│   ├── basic_usage.py
-│   ├── onchain-agent/          # Production chatbot
-│   └── autonomous-portfolio-agent/  # Autonomous agent
-├── tests/                      # Test suite
-├── README.md
-├── CHANGELOG.md
-└── pyproject.toml
+├── agentarc/
+│   ├── __init__.py                 # Top-level exports
+│   ├── __main__.py                 # CLI entry point (agentarc setup)
+│   ├── cli/
+│   │   ├── wizard.py               # Interactive setup wizard
+│   │   └── templates/              # Agent + env templates (8 wallet×framework combos)
+│   ├── core/
+│   │   ├── types.py                # TransactionRequest, TransactionResult, WalletType
+│   │   └── config.py               # PolicyConfig (YAML loading)
+│   ├── wallets/
+│   │   ├── base.py                 # WalletAdapter abstract base class
+│   │   ├── factory.py              # WalletFactory (from_private_key, from_erc4337, etc.)
+│   │   ├── policy_wallet.py        # PolicyWallet (wraps any WalletAdapter)
+│   │   └── adapters/
+│   │       ├── private_key.py      # EOA private key wallet
+│   │       ├── mnemonic.py         # HD mnemonic wallet
+│   │       ├── cdp.py              # Coinbase CDP wallet
+│   │       ├── smart_wallet_base.py # SmartWalletAdapter abstract base
+│   │       ├── erc4337.py          # ERC-4337 UserOperation wallet
+│   │       └── safe_adapter.py     # Gnosis Safe multisig wallet
+│   ├── frameworks/
+│   │   ├── openai_sdk.py           # OpenAIAdapter
+│   │   ├── langchain.py            # LangChainAdapter
+│   │   └── agentkit.py             # AgentKitAdapter
+│   ├── engine/                     # Validation pipeline
+│   └── validators/                 # Policy validator plugins
+│
+├── examples/
+│   ├── basic-chat-agent/           # EOA wallet + OpenAI/LangChain
+│   ├── smart-wallet-agents/        # ERC-4337 + Safe wallet agents
+│   └── autonomous-portfolio-agent/ # Autonomous portfolio agent
+│
+└── tests/
+    ├── test_smart_wallets.py       # ERC-4337 + Safe adapter tests
+    └── test_cli_setup.py           # CLI wizard tests
 ```
 
 ---
 
-## 🤝 Compatibility
-
-AgentARC works with all Coinbase AgentKit wallet providers:
-
-- ✅ **CDP EVM Wallet Provider**
-- ✅ **CDP Smart Wallet Provider**
-- ✅ **Ethereum Account Wallet Provider**
-
-Same 3-line integration pattern for all wallet types!
-
----
-
-## 📖 Documentation
-
-- **[CHANGELOG.md](CHANGELOG.md)** - Version history and updates
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Contributing guidelines
-- **[Examples](examples/)** - Sample implementations and demos
-
----
-
-## 🔒 Security Best Practices
-
-- **Start with restrictive policies** — Use low limits and gradually increase  
-- **Enable simulation** — Catch failures before sending transactions  
-- **Use Tenderly** — Get detailed execution traces and asset changes  
-- **Enable optional LLM validation** — Add AI-powered risk analysis where useful  
-- **Test on testnet** — Validate policies on Base Sepolia before mainnet  
-- **Monitor logs** — Review transaction validations regularly  
-- **Keep denylists updated** — Add known malicious addresses  
-- **Enable threat checks** — Automatically catch token traps (honeypots and related patterns) and expand coverage over time  
-
----
-
-## 🛠️ Environment Variables
+## Testing
 
 ```bash
-# Coinbase CDP (required for real wallet)
-CDP_API_KEY_NAME=your_cdp_key_name
-CDP_API_KEY_PRIVATE_KEY=your_cdp_private_key
+# Run smart wallet adapter tests
+python -m pytest tests/test_smart_wallets.py -v    # 26 tests
 
-# LLM Provider (optional - for Stage 4)
-OPENAI_API_KEY=your_openai_key
-# OR
-ANTHROPIC_API_KEY=your_anthropic_key
+# Run CLI wizard tests
+python -m pytest tests/test_cli_setup.py -v        # 29 tests
 
-# Tenderly (optional - for advanced simulation)
-TENDERLY_ACCESS_KEY=your_tenderly_key
+# Run all
+python -m pytest tests/test_smart_wallets.py tests/test_cli_setup.py -v
+```
+
+---
+
+## Environment Variables
+
+```bash
+# EOA wallet
+PRIVATE_KEY=0x...
+RPC_URL=https://sepolia.base.org
+
+# ERC-4337 smart wallet
+OWNER_PRIVATE_KEY=0x...
+BUNDLER_URL=https://api.pimlico.io/v2/84532/rpc?apikey=...
+RPC_URL=https://sepolia.base.org
+
+# Safe multisig
+SAFE_ADDRESS=0x...
+SIGNER_PRIVATE_KEY=0x...
+RPC_URL=https://sepolia.base.org
+
+# CDP wallet
+CDP_API_KEY_NAME=your_key_name
+CDP_API_KEY_PRIVATE_KEY=your_key
+NETWORK_ID=base-sepolia
+
+# OpenAI (for agent + optional LLM validation)
+OPENAI_API_KEY=sk-...
+
+# Tenderly simulation (optional — Stage 3)
+TENDERLY_ACCESS_KEY=your_key
 TENDERLY_ACCOUNT_SLUG=your_account
 TENDERLY_PROJECT_SLUG=your_project
 ```
 
 ---
 
-## 🎯 Use Cases
+## Security Best Practices
 
-- 🤖 **AI Trading Bots** - Prevent unauthorized trades and limit exposure
-- 💼 **Portfolio Managers** - Enforce spending limits across assets
-- 🏦 **Treasury Management** - Multi-signature with policy enforcement
-- 🎮 **GameFi Agents** - Limit in-game asset transfers
-- 🔐 **Security Testing** - Validate smart contract interactions
-- 🛡️ **Honeypot Protection** - Automatically detect and block scam tokens
-
----
-
-## 📝 License
-
-MIT License - see [LICENSE](LICENSE) file for details.
+- **Start restrictive** — low ETH limits, small allow lists, then loosen as needed
+- **Enable simulation** — catch reverts before spending gas
+- **Test on testnet first** — validate policies on Base Sepolia before mainnet
+- **Keep denylists updated** — add known malicious addresses
+- **Enable LLM validation** for high-value agents — worth the $0.003/tx cost
+- **Monitor logs** — review `info` level output regularly
 
 ---
 
-## 🤝 Contributing
+## Documentation
 
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+- [examples/basic-chat-agent/README.md](examples/basic-chat-agent/README.md) — EOA agent tutorial
+- [examples/smart-wallet-agents/README.md](examples/smart-wallet-agents/README.md) — ERC-4337 and Safe agent tutorial
+- [CHANGELOG.md](CHANGELOG.md) — Version history
 
 ---
 
-## 🆘 Support
+## Support
 
 - **Issues:** [GitHub Issues](https://github.com/galaar-org/AgentARC/issues)
 - **Examples:** [examples/](examples/)
-- **Documentation:** [README.md](README.md)
 
 ---
 
-**Protect your AI agents with AgentARC - Multi-layer security for blockchain interactions** 🛡️
+## License
+
+MIT License — see [LICENSE](LICENSE) for details.
