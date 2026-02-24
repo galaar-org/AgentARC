@@ -19,8 +19,6 @@ from typing import Any, Dict, List, Optional, Union
 
 from web3 import Web3
 from eth_account import Account
-from eth_account.messages import defunct_hash_message
-from eth_abi import encode
 
 from .smart_wallet_base import SmartWalletAdapter
 from ...core.types import TransactionRequest, TransactionResult

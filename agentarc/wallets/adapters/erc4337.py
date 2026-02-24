@@ -278,15 +278,15 @@ class ERC4337Adapter(SmartWalletAdapter):
         # Build initCode if not deployed
         init_code = "0x"
         if not self.is_deployed():
-            # initCode = factory_address + createAccount(owner, salt) calldata
-            factory = self.w3.eth.contract(
-                address=Web3.to_checksum_address(self.account_factory),
-                abi=FACTORY_CREATE_ACCOUNT_ABI,
+            # Encode createAccount(owner, salt) purely without any RPC call
+            selector = Web3.keccak(text="createAccount(address,uint256)")[:4]
+            encoded_args = encode(
+                ["address", "uint256"],
+                [Web3.to_checksum_address(self.owner_account.address), 0],
             )
-            create_calldata = factory.functions.createAccount(
-                self.owner_account.address, 0
-            ).build_transaction({"from": self.owner_account.address})["data"]
-            init_code = self.account_factory + create_calldata[2:]  # strip 0x from calldata
+            create_calldata = selector.hex() + encoded_args.hex()
+            factory_addr = self.account_factory.lower().replace("0x", "")
+            init_code = "0x" + factory_addr + create_calldata
 
         # Get nonce
         nonce = hex(self.get_nonce()) if self.is_deployed() else "0x0"
@@ -386,16 +386,23 @@ class ERC4337Adapter(SmartWalletAdapter):
             "params": params,
         }
 
-        response = requests.post(
-            self.bundler_url,
-            json=payload,
-            headers={"Content-Type": "application/json"},
-        )
-        response.raise_for_status()
+        try:
+            response = requests.post(
+                self.bundler_url,
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=30,
+            )
+            response.raise_for_status()
+        except requests.Timeout:
+            raise Exception(f"Bundler RPC timeout after 30s (method={method})")
+        except requests.RequestException as exc:
+            raise Exception(f"Bundler RPC request failed (method={method}): {exc}")
+
         result = response.json()
 
         if "error" in result:
-            raise Exception(f"Bundler RPC error: {result['error']}")
+            raise Exception(f"Bundler RPC error [{method}]: {result['error']}")
 
         return result.get("result")
 

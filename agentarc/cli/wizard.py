@@ -197,7 +197,7 @@ class SetupWizard:
 
     TEMPLATES_DIR = Path(__file__).parent / "templates"
 
-    def run(self):
+    def run(self, project_path: Optional[str] = None):
         """Run the interactive setup wizard."""
         self._print_banner()
 
@@ -208,17 +208,18 @@ class SetupWizard:
         )
 
         if project_type.lower() == "new":
-            self._run_new_project()
+            self._run_new_project(base_path=project_path)
         else:
-            self._run_existing_project()
+            self._run_existing_project(path=project_path)
 
     # ------------------------------------------------------------------
     # New project flow
     # ------------------------------------------------------------------
 
-    def _run_new_project(self):
+    def _run_new_project(self, base_path: Optional[str] = None):
         project_name = click.prompt("Enter your project name", default="my-secure-agent")
-        project_path = Path.cwd() / project_name
+        base = Path(base_path) if base_path else Path.cwd()
+        project_path = base / project_name
 
         if project_path.exists():
             click.echo(f"\nWarning: Directory {project_path} already exists")

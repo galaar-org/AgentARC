@@ -22,7 +22,7 @@ def setup(path: str):
     from .cli.wizard import SetupWizard
 
     wizard = SetupWizard()
-    wizard.run()
+    wizard.run(project_path=path)
 
 
 if __name__ == "__main__":

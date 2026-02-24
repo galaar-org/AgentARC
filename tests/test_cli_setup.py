@@ -6,11 +6,9 @@ the setup command without touching the filesystem or prompting
 real input.
 """
 
-import os
 import pytest
 from pathlib import Path
 from click.testing import CliRunner
-from unittest.mock import patch, MagicMock
 
 from agentarc.__main__ import cli
 from agentarc.cli.wizard import SetupWizard, _build_policy_yaml, _get_requirements
