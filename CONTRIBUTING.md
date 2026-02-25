@@ -16,7 +16,7 @@ Thank you for your interest in contributing to AgentARC! This document provides 
 
 ## Code of Conduct
 
-This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to security@agentarc.dev.
+This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to me@dipeshsukhani.dev.
 
 ## Getting Started
 
@@ -296,7 +296,7 @@ test: add tests for wallet factory
 
 - **Questions**: Open a [Discussion](https://github.com/anthropics/agentarc/discussions)
 - **Bugs**: Open an [Issue](https://github.com/anthropics/agentarc/issues)
-- **Security**: Email security@agentarc.dev
+- **Security**: Email me@dipeshsukhani.dev
 
 ## Recognition
 

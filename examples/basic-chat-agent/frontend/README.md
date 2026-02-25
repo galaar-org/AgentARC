@@ -109,7 +109,7 @@ Each validation event has:
 
 ## Tech Stack
 
-- **Next.js 15** - React framework
+- **Next.js 14** - React framework
 - **Tailwind CSS 4** - Styling
 - **shadcn/ui** - UI components
 - **Vercel AI SDK** - Chat streaming

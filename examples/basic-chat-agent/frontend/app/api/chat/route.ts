@@ -126,9 +126,15 @@ export async function POST(req: Request) {
           buffer = lines.pop() || '';
 
           for (const line of lines) {
-            if (line.startsWith('data: ')) {
+            // Trim to handle CRLF line endings
+            const trimmedLine = line.trim();
+            if (trimmedLine === 'data: [DONE]') {
+              // Handle SSE done signal
+              continue;
+            }
+            if (trimmedLine.startsWith('data: ')) {
               try {
-                const sseData = JSON.parse(line.slice(6)) as SSEEvent;
+                const sseData = JSON.parse(trimmedLine.slice(6)) as SSEEvent;
 
                 switch (sseData.type) {
                   case 'agent':

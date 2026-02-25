@@ -22,7 +22,7 @@ Example:
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Tuple, Optional, Any
+from typing import List, Tuple, Optional
 
 from .context import ValidationContext
 from ..core.events import EventEmitter, ValidationStage, EventStatus

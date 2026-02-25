@@ -111,7 +111,7 @@ class ComponentFactory:
         Returns:
             CalldataParser instance
         """
-        from ..calldata_parser import CalldataParser
+        from ..parsers import CalldataParser
 
         return CalldataParser()
 
@@ -131,7 +131,7 @@ class ComponentFactory:
         if not self.config.simulation.get("enabled", False):
             return None
 
-        from ..simulator import TransactionSimulator
+        from ..simulators import TransactionSimulator
 
         return TransactionSimulator(web3_provider)
 

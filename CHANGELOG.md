@@ -37,6 +37,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - None — all new wallet adapters are additive and the existing `WalletAdapter` / `PolicyWallet` API is unchanged
 
 ---
+## [0.2.0] - 2026-02-20
+
+### ✨ Features
+- **Framework Adapters**: Added support for OpenAI SDK and LangChain frameworks.
+- **Wallet Adapters**: Implemented mnemonic and private key wallet adapters.
+- **Event Streaming**: Implemented event streaming for the validation process in FastAPI server.
+- **Example Chat Agents**: Created example chat agents with policy enforcement.
+- **Chat Frontend**: Added a new chat frontend.
+- **Project Configuration**: Migrated dependencies from `requirements.txt` to `pyproject.toml`.
+
+### 🛠️ Technical Implementation & Refactoring
+- **Code Architecture**: Major code architecture refactor, including new `AgentARC` exceptions, interfaces, and typed APIs.
+- **Import Cleanup**: Updated import paths and cleaned up unused imports across multiple files.
+
+### 📚 Documentation & Community
+- **Security Policy**: Added `SECURITY.md` and updated security reporting guidelines.
+- **Issue Templates**: Added issue templates for bug reports and feature requests.
+- **Contributing**: Enhanced contributing guidelines.
+- **Code of Conduct**: Added `CODE_OF_CONDUCT.md` and conduct reporting guidelines.
 
 ## [0.1.0] - 2026-01-02
 
