@@ -152,7 +152,7 @@ except ImportError:
     OpenAIAdapter = None  # type: ignore
     AgentKitAdapter = None  # type: ignore
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __all__ = [
     # ========== LEGACY API (backward compatible) ==========
     # Main components
