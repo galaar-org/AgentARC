@@ -1,0 +1,162 @@
+# ============================================================
+# AgentARC Security Policy Configuration
+# ============================================================
+# This file defines security rules that protect your AI agent
+# from making malicious or unauthorized blockchain transactions.
+#
+# These policies work identically for ALL wallet types:
+# EOA, ERC-4337 smart wallet, and Safe multisig.
+#
+# The validation pipeline runs BEFORE the transaction is signed:
+#   1. Intent Analysis  — parse calldata to understand what it does
+#   2. Policy Check     — run the rules defined in this file
+#   3. Simulation       — test the transaction (if Tenderly configured)
+#   4. LLM Analysis     — AI threat detection (if enabled below)
+#
+# Learn more: https://github.com/galaar-org/AgentARC
+# ============================================================
+
+version: '2.0'
+
+# Master switch — set to false to disable all policy checks
+enabled: true
+
+# Apply these policies to all transactions
+apply_to:
+  - all
+
+# Logging: minimal | info | debug
+logging:
+  level: info
+
+# ============================================================
+# SECURITY POLICIES
+# ============================================================
+# Each policy can be toggled independently with enabled: true/false
+# ============================================================
+
+policies:
+
+  # ------------------------------------------------------------
+  # ETH Transfer Limit
+  # Blocks any transaction that sends more ETH than this amount.
+  # 1000000000000000000 wei = 1 ETH
+  # ------------------------------------------------------------
+  - type: eth_value_limit
+    enabled: true
+    max_value_wei: '1000000000000000000'  # 1 ETH max per transaction
+    description: Limit ETH transfers to 1 ETH per transaction
+
+  # ------------------------------------------------------------
+  # Address Denylist
+  # Add known scam/sanctioned addresses here to block them.
+  # The agent will refuse to send anything to these addresses.
+  # ------------------------------------------------------------
+  - type: address_denylist
+    enabled: true
+    denied_addresses: []  # Add addresses to block, e.g: '0xScamAddress...'
+    description: Block transactions to denied addresses
+
+  # ------------------------------------------------------------
+  # Address Allowlist (disabled by default)
+  # If enabled, the agent can ONLY send to addresses in this list.
+  # Use for maximum security when you know all valid recipients.
+  # ------------------------------------------------------------
+  - type: address_allowlist
+    enabled: false
+    allowed_addresses: []  # Add your trusted addresses here
+    description: Only allow transactions to approved addresses
+
+  # ------------------------------------------------------------
+  # Per-Asset Spending Limits
+  # Set different limits for each ERC-20 token.
+  # Addresses below are for Base Sepolia testnet.
+  # Update addresses for mainnet or other networks.
+  # ------------------------------------------------------------
+  - type: per_asset_limit
+    enabled: true
+    asset_limits:
+      - name: USDC
+        address: '0x036CbD53842c5426634e7929541eC2318f3dCF7e'  # Base Sepolia
+        max_amount: '10000000'   # 10 USDC (USDC has 6 decimals)
+        decimals: 6
+      - name: DAI
+        address: '0x6B175474E89094C44Da98b954EedeAC495271d0F'
+        max_amount: '100000000000000000000'  # 100 DAI (18 decimals)
+        decimals: 18
+    description: Per-asset spending limits
+
+  # ------------------------------------------------------------
+  # Gas Limit
+  # Prevents the agent from submitting unusually expensive transactions.
+  # 500000 gas covers most DeFi interactions. Lower for simple transfers.
+  # ------------------------------------------------------------
+  - type: gas_limit
+    enabled: true
+    max_gas: 500000
+    description: Limit gas to 500k per transaction
+
+  # ------------------------------------------------------------
+  # Function Allowlist (disabled by default)
+  # If enabled, the agent can ONLY call functions in this list.
+  # Use for narrow-purpose agents (e.g. only allow token transfers).
+  # ------------------------------------------------------------
+  - type: function_allowlist
+    enabled: false
+    allowed_functions:
+      - eth_transfer
+      - transfer
+      - approve
+    description: Only allow specific function calls
+
+# ============================================================
+# TRANSACTION SIMULATION
+# ============================================================
+# Simulates the transaction in a sandbox before sending it.
+# Catches reverts, unexpected asset changes, and gas estimates.
+#
+# For Tenderly integration (detailed call traces + asset changes):
+#   Add to .env:
+#     TENDERLY_ACCESS_KEY=your-key
+#     TENDERLY_ACCOUNT_SLUG=your-account
+#     TENDERLY_PROJECT_SLUG=your-project
+#   Get credentials at: https://dashboard.tenderly.co
+# ============================================================
+
+simulation:
+  enabled: true
+  fail_on_revert: true   # Block transactions that would revert on-chain
+  estimate_gas: true     # Estimate gas before sending
+  print_trace: false     # Set true for detailed Tenderly call traces
+
+# ============================================================
+# CALLDATA VALIDATION
+# ============================================================
+# Parses transaction calldata to understand what it does.
+# Used by the Intent Analysis stage and LLM Analysis.
+# ============================================================
+
+calldata_validation:
+  enabled: true
+  strict_mode: false  # Set true to block transactions with unrecognized calldata
+
+# ============================================================
+# AI-POWERED SECURITY ANALYSIS (optional)
+# ============================================================
+# Uses an LLM to detect sophisticated attacks that rule-based
+# checks miss: hidden approvals, reentrancy, honeypot tokens,
+# phishing contracts, MEV exploits, and more.
+#
+# Cost: ~$0.003 per transaction with gpt-4o-mini
+#
+# To enable: set enabled: true and ensure OPENAI_API_KEY is in .env
+# ============================================================
+
+llm_validation:
+  enabled: false
+  provider: openai       # openai or anthropic
+  model: gpt-4o-mini
+  api_key: '${OPENAI_API_KEY}'
+  block_threshold: 0.70  # Block if malicious confidence >= 70%
+  warn_threshold: 0.40   # Warn if malicious confidence >= 40%
+  description: AI-powered security analysis to detect malicious patterns

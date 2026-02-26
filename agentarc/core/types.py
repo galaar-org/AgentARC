@@ -300,6 +300,8 @@ class WalletType(str, Enum):
     CDP = "cdp"
     EIP1193 = "eip1193"
     SMART_CONTRACT = "smart_contract"
+    ERC4337 = "erc4337"
+    SAFE = "safe"
 
 
 @dataclass

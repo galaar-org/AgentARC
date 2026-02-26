@@ -174,3 +174,87 @@ class WalletFactory:
         from .adapters.web3_adapter import Web3WalletAdapter
 
         return Web3WalletAdapter(web3_instance, account_address)
+
+    @staticmethod
+    def from_erc4337(
+        owner_key: str,
+        bundler_url: str,
+        rpc_url: str,
+        chain_id: Optional[int] = None,
+        entry_point_address: Optional[str] = None,
+        account_address: Optional[str] = None,
+        account_factory_address: Optional[str] = None,
+    ) -> WalletAdapter:
+        """
+        Create an ERC-4337 smart wallet.
+
+        Args:
+            owner_key: Private key of the EOA that controls the smart account
+            bundler_url: URL of the ERC-4337 bundler RPC (Pimlico, Alchemy, etc.)
+            rpc_url: Standard JSON-RPC URL for on-chain reads
+            chain_id: Target chain ID (auto-detected if not provided)
+            entry_point_address: EntryPoint contract address (default: v0.6)
+            account_address: Smart account address (derived if not provided)
+            account_factory_address: SimpleAccountFactory address
+
+        Returns:
+            WalletAdapter instance (ERC4337Adapter)
+
+        Example:
+            >>> wallet = WalletFactory.from_erc4337(
+            ...     owner_key="0x1234...",
+            ...     bundler_url="https://api.pimlico.io/v2/84532/rpc?apikey=...",
+            ...     rpc_url="https://sepolia.base.org",
+            ...     chain_id=84532,
+            ... )
+        """
+        from .adapters.erc4337 import ERC4337Adapter
+
+        return ERC4337Adapter(
+            owner_key=owner_key,
+            bundler_url=bundler_url,
+            rpc_url=rpc_url,
+            chain_id=chain_id,
+            entry_point_address=entry_point_address,
+            account_address=account_address,
+            account_factory_address=account_factory_address,
+        )
+
+    @staticmethod
+    def from_safe(
+        safe_address: str,
+        signer_key: str,
+        rpc_url: str,
+        chain_id: Optional[int] = None,
+        auto_execute: bool = True,
+    ) -> WalletAdapter:
+        """
+        Create a Safe multisig wallet.
+
+        Args:
+            safe_address: Address of the deployed Safe contract
+            signer_key: Private key of a Safe owner/signer
+            rpc_url: JSON-RPC URL
+            chain_id: Target chain ID (auto-detected if not provided)
+            auto_execute: Execute immediately if threshold met (default: True)
+
+        Returns:
+            WalletAdapter instance (SafeAdapter)
+
+        Example:
+            >>> wallet = WalletFactory.from_safe(
+            ...     safe_address="0xYourSafe...",
+            ...     signer_key="0x1234...",
+            ...     rpc_url="https://sepolia.base.org",
+            ...     chain_id=84532,
+            ... )
+        """
+        from .adapters.safe_adapter import SafeAdapter
+
+        return SafeAdapter(
+            safe_address=safe_address,
+            signer_key=signer_key,
+            rpc_url=rpc_url,
+            chain_id=chain_id,
+            auto_execute=auto_execute,
+        )

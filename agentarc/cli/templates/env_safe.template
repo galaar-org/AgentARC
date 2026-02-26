@@ -1,0 +1,13 @@
+# Safe Multisig Wallet
+SAFE_ADDRESS=0xYourDeployedSafeAddress
+SIGNER_PRIVATE_KEY=your_safe_owner_private_key
+RPC_URL=https://sepolia.base.org
+# AUTO_EXECUTE=true  # Execute immediately if threshold met
+
+# OpenAI (for agent and optional LLM validation)
+OPENAI_API_KEY=your_openai_key
+
+# Optional: Tenderly Simulation (Stage 3)
+# TENDERLY_ACCESS_KEY=your_tenderly_key
+# TENDERLY_ACCOUNT_SLUG=your_account
+# TENDERLY_PROJECT_SLUG=your_project

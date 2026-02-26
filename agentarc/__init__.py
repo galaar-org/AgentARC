@@ -123,6 +123,9 @@ try:
         PrivateKeyWallet,
         MnemonicWallet,
         CdpWalletAdapter,
+        SmartWalletAdapter,
+        ERC4337Adapter,
+        SafeAdapter,
     )
 except ImportError:
     WalletAdapter = None  # type: ignore
@@ -131,6 +134,9 @@ except ImportError:
     PrivateKeyWallet = None  # type: ignore
     MnemonicWallet = None  # type: ignore
     CdpWalletAdapter = None  # type: ignore
+    SmartWalletAdapter = None  # type: ignore
+    ERC4337Adapter = None  # type: ignore
+    SafeAdapter = None  # type: ignore
 
 # Frameworks module - Multi-framework adapters (phase 2 - optional)
 try:
@@ -146,7 +152,7 @@ except ImportError:
     OpenAIAdapter = None  # type: ignore
     AgentKitAdapter = None  # type: ignore
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __all__ = [
     # ========== LEGACY API (backward compatible) ==========
     # Main components
@@ -221,6 +227,9 @@ __all__ = [
     "PrivateKeyWallet",
     "MnemonicWallet",
     "CdpWalletAdapter",
+    "SmartWalletAdapter",
+    "ERC4337Adapter",
+    "SafeAdapter",
     # Frameworks module
     "FrameworkAdapter",
     "LangChainAdapter",

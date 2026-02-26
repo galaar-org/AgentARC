@@ -1,0 +1,53 @@
+"""
+{project_name} - AgentARC Protected Agent (Coinbase CDP + OpenAI SDK)
+"""
+import os
+import json
+from dotenv import load_dotenv
+load_dotenv()
+
+from openai import OpenAI
+from coinbase_agentkit import CdpEvmWalletProvider, CdpWalletProviderConfig
+from agentarc import WalletFactory, PolicyWallet, OpenAIAdapter
+
+# 1. Create CDP wallet
+cdp_config = CdpWalletProviderConfig(network_id=os.environ.get("NETWORK_ID", "base-sepolia"))
+cdp_provider = CdpEvmWalletProvider(cdp_config)
+wallet = WalletFactory.from_cdp(cdp_provider)
+
+# 2. Wrap with policy enforcement
+policy_wallet = PolicyWallet(wallet, config_path="policy.yaml")
+
+# 3. Create OpenAI tools
+adapter = OpenAIAdapter()
+tools = adapter.create_all_tools(policy_wallet)
+
+print(f"Wallet: {{policy_wallet.get_address()}}")
+print(f"Policies active: {{len(policy_wallet.get_config().get_enabled_policies())}}")
+
+# 4. Chat loop
+client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+messages = [{{"role": "system", "content": "You are a blockchain agent with a CDP wallet."}}]
+
+while True:
+    user_input = input("\nYou: ")
+    if user_input.lower() in ("quit", "exit"):
+        break
+
+    messages.append({{"role": "user", "content": user_input}})
+    response = client.chat.completions.create(
+        model="gpt-4o-mini", messages=messages, tools=tools
+    )
+
+    assistant_message = response.choices[0].message
+    while assistant_message.tool_calls:
+        messages.append(assistant_message)
+        tool_results = adapter.process_tool_calls(response, policy_wallet)
+        messages.extend(tool_results)
+        response = client.chat.completions.create(
+            model="gpt-4o-mini", messages=messages, tools=tools
+        )
+        assistant_message = response.choices[0].message
+
+    messages.append(assistant_message)
+    print(f"\nAgent: {{assistant_message.content}}")

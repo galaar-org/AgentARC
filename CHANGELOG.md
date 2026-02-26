@@ -5,6 +5,38 @@ All notable changes to AgentArc will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-02-25
+
+### ✨ Added
+
+#### Smart Wallet Adapters (ERC-4337 & Safe)
+- **`ERC4337Adapter`**: Full ERC-4337 account abstraction support — builds and submits `UserOperation` objects through a bundler (Pimlico, Alchemy, etc.), counterfactual address derivation via `SimpleAccountFactory`, auto-deploy on first transaction
+- **`SafeAdapter`**: Gnosis Safe multisig support — builds Safe transactions, EIP-712 signing, auto-executes when `threshold == 1`, proposes for co-signing when `threshold > 1`
+- **`SmartWalletAdapter`**: Abstract base class extending `WalletAdapter` with `get_owner_address()`, `is_deployed()`, `get_wallet_type_info()` methods
+- **`WalletFactory.from_erc4337()`**: Static factory for ERC-4337 wallets
+- **`WalletFactory.from_safe()`**: Static factory for Safe multisig wallets
+- **`WalletType.ERC4337`** and **`WalletType.SAFE`** added to the `WalletType` enum
+
+#### Interactive CLI Setup Wizard (`agentarc setup`)
+- **`SetupWizard`** class: guides through wallet type, framework, network, and policy selection
+- Supports `--path` option to scaffold into a custom directory
+- Generates a complete project scaffold: `agent.py`, `policy.yaml`, `.env.example`, `requirements.txt`, `.gitignore`
+- **8 agent templates**: all combinations of EOA / ERC-4337 / Safe / CDP × OpenAI SDK / LangChain
+- **4 env templates**: wallet-type-specific environment variable stubs
+- Template files packaged as `agentarc` package data (available in installed wheels)
+
+#### Examples
+- **`examples/smart-wallet-agents/`**: Tutorial-quality examples for ERC-4337 and Safe multisig agents, matching the style of `basic-chat-agent`
+- Step-by-step setup instructions, starter prompts, and detailed `policy.yaml` with inline comments
+
+### 📦 Dependencies
+- Added `requests>=2.28.0` to core dependencies
+- New optional groups: `[smart-wallets]`, `[safe]`, `[openai]`, `[langchain]`
+
+### 📝 Breaking Changes
+- None — all new wallet adapters are additive and the existing `WalletAdapter` / `PolicyWallet` API is unchanged
+
+---
 ## [0.2.0] - 2026-02-20
 
 ### ✨ Features

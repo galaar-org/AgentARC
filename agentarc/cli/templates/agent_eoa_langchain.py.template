@@ -1,0 +1,42 @@
+"""
+{project_name} - AgentARC Protected Agent (EOA + LangChain)
+"""
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+from langchain_openai import ChatOpenAI
+from langgraph.prebuilt import create_react_agent
+from langgraph.checkpoint.memory import MemorySaver
+from agentarc import WalletFactory, PolicyWallet, LangChainAdapter
+
+# 1. Create EOA wallet
+wallet = WalletFactory.from_private_key(
+    private_key=os.environ["PRIVATE_KEY"],
+    rpc_url=os.environ["RPC_URL"],
+)
+
+# 2. Wrap with policy enforcement
+policy_wallet = PolicyWallet(wallet, config_path="policy.yaml")
+
+# 3. Create LangChain agent with tools
+adapter = LangChainAdapter()
+tools = adapter.create_all_tools(policy_wallet)
+llm = ChatOpenAI(model="gpt-4o-mini", api_key=os.environ["OPENAI_API_KEY"])
+agent = create_react_agent(llm, tools=tools, checkpointer=MemorySaver())
+
+print(f"Wallet: {{policy_wallet.get_address()}}")
+print(f"Policies active: {{len(policy_wallet.get_config().get_enabled_policies())}}")
+
+# 4. Chat loop
+config = {{"configurable": {{"thread_id": "main"}}}}
+while True:
+    user_input = input("\nYou: ")
+    if user_input.lower() in ("quit", "exit"):
+        break
+
+    for event in agent.stream(
+        {{"messages": [{{"role": "user", "content": user_input}}]}}, config=config
+    ):
+        if "agent" in event:
+            print(f"\nAgent: {{event['agent']['messages'][0].content}}")
