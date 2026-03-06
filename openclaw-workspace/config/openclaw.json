@@ -1,0 +1,77 @@
+{
+  "$schema": "https://openclaw.ai/schema/config.json",
+
+  "gateway": {
+    "port": 18789,
+    "host": "127.0.0.1"
+  },
+
+  "agents": {
+    "defaults": {
+      "workspace": "/home/openclaw/workspace",
+      "model": {
+        "primary": "anthropic/claude-sonnet-4",
+        "fallbacks": ["openai/gpt-4o", "deepseek/deepseek-chat"]
+      },
+      "heartbeat": {
+        "every": "30m",
+        "target": "telegram",
+        "activeHours": {
+          "start": "08:00",
+          "end": "22:00"
+        }
+      }
+    }
+  },
+
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "token": "${TELEGRAM_BOT_TOKEN}",
+      "dmPolicy": "pairing",
+      "allowedUsers": [],
+      "notifications": {
+        "contentPublished": true,
+        "approvalNeeded": true,
+        "competitorAlert": true,
+        "performanceReport": true,
+        "errors": true
+      }
+    }
+  },
+
+  "models": {
+    "providers": {
+      "anthropic": {
+        "apiKey": "${ANTHROPIC_API_KEY}"
+      },
+      "openai": {
+        "apiKey": "${OPENAI_API_KEY}"
+      },
+      "deepseek": {
+        "apiKey": "${DEEPSEEK_API_KEY}",
+        "baseUrl": "https://api.deepseek.com/v1"
+      }
+    }
+  },
+
+  "tools": {
+    "web": {
+      "search": {
+        "provider": "brave",
+        "apiKey": "${BRAVE_API_KEY}"
+      }
+    }
+  },
+
+  "skills": {
+    "workspace": true,
+    "managed": true,
+    "bundled": true
+  },
+
+  "logging": {
+    "level": "info",
+    "file": "/var/log/openclaw/agent.log"
+  }
+}
