@@ -58,8 +58,15 @@
   "tools": {
     "web": {
       "search": {
-        "provider": "brave",
-        "apiKey": "${BRAVE_API_KEY}"
+        "provider": "${SEARCH_PROVIDER:-duckduckgo}",
+        "providers": {
+          "brave": {
+            "apiKey": "${BRAVE_API_KEY}"
+          },
+          "duckduckgo": {
+            "enabled": true
+          }
+        }
       }
     }
   },
